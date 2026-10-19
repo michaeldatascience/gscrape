@@ -12,8 +12,9 @@ Code that exists:
 - `GosomSearch` in `experiments/coverage/src/geocoverage/gosom.py` is the live one-view adapter. One process gets `-geo` latitude,longitude, a zoom fitted to that cell, `-depth` at most 10, and `-c 1`. The argument builder rejects `-grid-bbox`, `-grid-cell`, and `-fast-mode`. Email and review crawling stay off. Parsed rows keep place ID, longitude, and latitude. The planner still clips to the polygon and still withholds a completeness percentage.
 - Location input is a Shapely `Polygon` or `MultiPolygon` in `(longitude, latitude)` order. There is no city-name or address input. The offline fixture area is `box(0.0, 0.0, 0.02, 0.02)` in `experiments/coverage/src/geocoverage/fixtures.py`. The opt-in live polygon is `experiments/coverage/regions/central_london.geojson`.
 - `discover()` in `planner.py` splits when a view returns at least 80% of that adapter's cap, probes quiet cells, and never emits a completeness percentage. The gosom cap constant is 120.
-- Verified on 2026-10-19 from `experiments/coverage`: `uv run pytest -q` passed 30 tests, `uv run ruff check src tests` passed, `uv run mypy src` passed. `uv run python -m geocoverage` still reports the mock fixture: one search of 120 IDs and a planner result of 500 IDs, with 380 IDs only in the planner.
+- Verified on 2026-10-19 from `experiments/coverage`: `uv run pytest -q` passed 31 tests, `uv run ruff check src tests` passed, `uv run mypy src` passed. `uv run python -m geocoverage` still reports the mock fixture: one search of 120 IDs and a planner result of 500 IDs, with 380 IDs only in the planner.
 - `hidden_70_of_150` stays `UNRESOLVED` with `RANKING_RISK`. A one-search budget stops at 120 IDs with `BUDGET_EXHAUSTED`.
+- Live gosom image: `gosom/google-maps-scraper@sha256:e205c02913c5a69c16fc2094b8e5b194a2f655166d2c1126d50548d216e6b1b2`. Fast mode and grid mode were off. No proxy file was used.
 
 Docker:
 
@@ -21,9 +22,15 @@ Docker:
 - The WSL check from 2026-10-19 still stands for that machine: `wsl -d Ubuntu` had no `docker` or `go` binary. The user is in group `docker` and `~/.docker` remains from an old Docker Desktop setup, but that engine was not running. Windows PowerShell also had no `docker` or `go`.
 - Proxy URLs belong in `secrets/gosom-proxies.txt` (gitignored). No proxy file was added.
 
+Live comparison, same polygon, hard budget of 5 gosom processes:
+
+- Keyword `coffee`, depth 10, zoom 15: one process returned 75 rows. 41 were inside the polygon and 34 were outside. 75 is under the split line (80% of 120), so the planner did not split. Both arms have the same 41 IDs. Summary: `experiments/coverage/results/central_london_coffee_depth10.json`.
+- Keyword `restaurant`, depth 20: the root view returned 118 rows, 68 inside the polygon and 50 outside. The four child views returned 119, 119, 120, and 119 rows. Every child was at the maps slice, so each was split, and the budget then stopped. The planner kept 224 in-polygon IDs. 68 were also in the single view. 156 were only in the planner. None were only in the single view. Status is `BUDGET_EXHAUSTED`. Completeness is unknown. Summary: `experiments/coverage/results/central_london_restaurant.json`.
+
 Next task:
 
-1. Run one small real comparison once `gosom/google-maps-scraper` is pulled: `uv run python -m geocoverage.live --keyword coffee --polygon regions/central_london.geojson --max-searches 5` from `experiments/coverage`. Fast mode stays off. The fetch budget is 5 processes. Compare place-ID sets. Completeness stays unknown.
+1. The 16 grandchild cells are still `BUDGET_EXHAUSTED`. A larger process budget can search them. Do not treat 224 as the number of restaurants in the polygon.
+2. Docker on the user's WSL Ubuntu 26.04 is still absent. Repeating this run there needs that engine, then the same `python -m geocoverage.live` command.
 
 Decision record: ADR-008 in `DECISIONS.md`.
 
