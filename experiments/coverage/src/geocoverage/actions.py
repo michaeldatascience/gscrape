@@ -198,10 +198,12 @@ def run_action(
 def analyse_cell(cell: _CellActions) -> dict[str, object]:
     baseline = set(cell.baseline_ids)
     actions: list[dict[str, object]] = []
+    new_sets: list[set[str]] = []
     all_ids = set(baseline)
     for outcome in cell.outcomes:
         found = set(outcome.in_target_ids)
         new_ids = found - baseline
+        new_sets.append(new_ids)
         all_ids |= found
         minutes = outcome.seconds / 60.0
         actions.append(
@@ -219,6 +221,12 @@ def analyse_cell(cell: _CellActions) -> dict[str, object]:
                 "errors": list(outcome.errors),
             }
         )
+    for index, entry in enumerate(actions):
+        others: set[str] = set()
+        for other_index, other in enumerate(new_sets):
+            if other_index != index:
+                others |= other
+        entry["new_only_this_action"] = len(new_sets[index] - others)
     return {
         "cell": cell.spec.name,
         "baseline_in_target": len(baseline),

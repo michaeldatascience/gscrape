@@ -133,6 +133,7 @@ def test_experiment_reports_new_per_search_for_each_action() -> None:
     entries = {entry["action"]: entry for entry in ne["actions"]}  # type: ignore[index, union-attr]
     assert entries["zoom_in"]["new_vs_baseline"] == 1
     assert entries["zoom_in"]["new_per_search"] == 1.0
+    assert entries["zoom_in"]["new_only_this_action"] == 1
     assert entries["split"]["searches"] == 4
     assert entries["split"]["new_vs_baseline"] == 0
     assert planned_searches(cells, ACTION_NAMES) == 24

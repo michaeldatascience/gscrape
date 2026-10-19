@@ -1,0 +1,366 @@
+{
+  "experiment": "exp2-actions",
+  "area": "Vashi (circle of 0.75 km around latitude 19.0635, longitude 72.9986)",
+  "keyword": "restaurant",
+  "design": "Baseline per cell = Experiment 1 first repeat (one ordinary search, zoom 17, ~750 m quadrant of the 0.75 km Vashi circle). Actions tried independently per cell: zoom_in (zoom 18, same centre, 1 search), shift (centre +25% width east/+25% height north, zoom 17, 1 search), split (4 children at zoom 18). All returns clipped to the original cell-and-circle target. 24 fresh gosom searches, -c 1 depth 20. Full stored runs are in the gitignored .runs/vashi-actions.json (note: stored payload predates the new_only_this_action field; values here are computed from its new_ids).",
+  "action_totals": {
+    "zoom_in": {
+      "searches": 4,
+      "seconds": 460.74,
+      "raw_rows": 375,
+      "new_vs_baseline": 7
+    },
+    "shift": {
+      "searches": 4,
+      "seconds": 483.05,
+      "raw_rows": 395,
+      "new_vs_baseline": 5
+    },
+    "split": {
+      "searches": 16,
+      "seconds": 1876.4,
+      "raw_rows": 1506,
+      "new_vs_baseline": 18
+    }
+  },
+  "cells": [
+    {
+      "cell": "SW",
+      "baseline_in_target": 0,
+      "baseline_ids": [],
+      "actions": [
+        {
+          "action": "zoom_in",
+          "searches": 1,
+          "seconds": 106.55,
+          "raw_rows": 86,
+          "in_target": 0,
+          "new_vs_baseline": 0,
+          "new_only_this_action": 0,
+          "new_per_search": 0.0,
+          "new_per_minute": 0.0,
+          "overlap_with_baseline": 0,
+          "errors": [],
+          "new_ids": []
+        },
+        {
+          "action": "shift",
+          "searches": 1,
+          "seconds": 129.36,
+          "raw_rows": 106,
+          "in_target": 0,
+          "new_vs_baseline": 0,
+          "new_only_this_action": 0,
+          "new_per_search": 0.0,
+          "new_per_minute": 0.0,
+          "overlap_with_baseline": 0,
+          "errors": [],
+          "new_ids": []
+        },
+        {
+          "action": "split",
+          "searches": 4,
+          "seconds": 434.57,
+          "raw_rows": 343,
+          "in_target": 0,
+          "new_vs_baseline": 0,
+          "new_only_this_action": 0,
+          "new_per_search": 0.0,
+          "new_per_minute": 0.0,
+          "overlap_with_baseline": 0,
+          "errors": [],
+          "new_ids": []
+        }
+      ],
+      "union_baseline_and_actions": 0,
+      "extra_over_baseline_all_actions": 0
+    },
+    {
+      "cell": "SE",
+      "baseline_in_target": 14,
+      "baseline_ids": [
+        "ChIJ-eOteFvB5zsRk44RKErMih0",
+        "ChIJ7RdZc-XB5zsRSDUWl4cXiyk",
+        "ChIJ9aG25CrB5zsRo1Men3WPBVQ",
+        "ChIJLdtOeavB5zsRrMliPECxzTI",
+        "ChIJQ6TiR7XB5zsRg1SV-YRfyl8",
+        "ChIJR809-E_B5zsRxdMyRnNlIMQ",
+        "ChIJh-qPNlfB5zsRKsdd5u7SrSM",
+        "ChIJp8agc9_B5zsR3LV-01BYyUs",
+        "ChIJqc3pM1DB5zsRAAAAMOAdogs",
+        "ChIJrRRU5EzB5zsROlK-bXP2JhU",
+        "ChIJuYO5M1DB5zsRkkvAIGyVg-I",
+        "ChIJue6GKI7B5zsRSXIA0TQrf6w",
+        "ChIJwct7D17B5zsR8QY3x5F0l1k",
+        "ChIJy4DAsjbB5zsRy_HpRPvo534"
+      ],
+      "actions": [
+        {
+          "action": "zoom_in",
+          "searches": 1,
+          "seconds": 119.45,
+          "raw_rows": 99,
+          "in_target": 13,
+          "new_vs_baseline": 5,
+          "new_only_this_action": 3,
+          "new_per_search": 5.0,
+          "new_per_minute": 2.511,
+          "overlap_with_baseline": 8,
+          "errors": [],
+          "new_ids": [
+            "ChIJ8-p8HXzB5zsRAyVokgOJ8lo",
+            "ChIJS88WeyvB5zsRd7X1mzROKag",
+            "ChIJddr9PxrB5zsRBDfaKvBrpVM",
+            "ChIJm0IRKZTB5zsRIFdOvMWiGOI",
+            "ChIJr6jK9aTB5zsRJLsJEhUevnc"
+          ]
+        },
+        {
+          "action": "shift",
+          "searches": 1,
+          "seconds": 111.23,
+          "raw_rows": 92,
+          "in_target": 14,
+          "new_vs_baseline": 0,
+          "new_only_this_action": 0,
+          "new_per_search": 0.0,
+          "new_per_minute": 0.0,
+          "overlap_with_baseline": 14,
+          "errors": [],
+          "new_ids": []
+        },
+        {
+          "action": "split",
+          "searches": 4,
+          "seconds": 479.94,
+          "raw_rows": 386,
+          "in_target": 17,
+          "new_vs_baseline": 3,
+          "new_only_this_action": 1,
+          "new_per_search": 0.75,
+          "new_per_minute": 0.375,
+          "overlap_with_baseline": 14,
+          "errors": [],
+          "new_ids": [
+            "ChIJS88WeyvB5zsRd7X1mzROKag",
+            "ChIJddr9PxrB5zsRBDfaKvBrpVM",
+            "ChIJkzoCtxfB5zsRY6_z5F4aRh0"
+          ]
+        }
+      ],
+      "union_baseline_and_actions": 20,
+      "extra_over_baseline_all_actions": 6
+    },
+    {
+      "cell": "NW",
+      "baseline_in_target": 38,
+      "baseline_ids": [
+        "ChIJ75JG-kzB5zsR--GAGOG2KXc",
+        "ChIJ75JG-kzB5zsR_TOC_esorTM",
+        "ChIJA9ZiWtrB5zsRZGIqPpTmPys",
+        "ChIJBS7tTkzB5zsRhuBgOuKCO2Q",
+        "ChIJCZxYMZfB5zsRyUqgmRzBF4Q",
+        "ChIJCwfsyz7B5zsRhSrLaQqWOSs",
+        "ChIJD5Ovr7vB5zsRrhGwuZGf1BI",
+        "ChIJDZUNyk3B5zsRkf67YaakhgE",
+        "ChIJH8XAosbB5zsR_qX0Fbo0TFQ",
+        "ChIJI3-j0efB5zsRxhzs0zAp5oc",
+        "ChIJISzXMADB5zsREDllyJdB07E",
+        "ChIJPZIV4lTB5zsRUEvfWyJKIZk",
+        "ChIJQ_5fJQDB5zsR_ArSEjHKuxs",
+        "ChIJRfWvPv_B5zsREqt5oNifSn8",
+        "ChIJS_UWYH7B5zsRp4Nm8bdEBUA",
+        "ChIJV_3kkZLB5zsRj_xhf7cuuIE",
+        "ChIJXb1oqnbH5zsRDTodo_s7dO0",
+        "ChIJZVQqw-PB5zsRLN_gxq1O4Ik",
+        "ChIJ_64nQ0XB5zsRk1y93CkTQoc",
+        "ChIJaQ4cBb3B5zsRvMtkSaRmvv4",
+        "ChIJdRyXxVjB5zsR_NLmY8HBuqo",
+        "ChIJdcX_ib3B5zsRBpLv0lOWbbo",
+        "ChIJeZ9XzAPB5zsRiUtCS3pPNsQ",
+        "ChIJg-dJEt7B5zsR74XPzYAr92A",
+        "ChIJj71qN9rB5zsRWLHWGUbCLTk",
+        "ChIJje1mSEzB5zsRlbq42rWTnKs",
+        "ChIJkeKmxU3B5zsRWexOjIc5AqU",
+        "ChIJmVs8r7LB5zsRYAUFxxfE0hg",
+        "ChIJmZgQbADB5zsR3qcG1mvOZ24",
+        "ChIJmzLyx4zB5zsROvHQeRslr4I",
+        "ChIJo1a2SUzB5zsRYoX5XojDbQ4",
+        "ChIJrVBTlUvB5zsRD6a0J1Xt2vo",
+        "ChIJu4JMWLnB5zsRh1iACYY7Y8E",
+        "ChIJua7-ZgDB5zsRnIEt_9dVjQo",
+        "ChIJwXBzVLPG5zsRd9qacNz2w9o",
+        "ChIJwb6ty03B5zsROq1hIVj35b4",
+        "ChIJxc2oAaHB5zsRgf24cRukhX4",
+        "ChIJyaBHpzXB5zsRogtx86BbLqQ"
+      ],
+      "actions": [
+        {
+          "action": "zoom_in",
+          "searches": 1,
+          "seconds": 126.18,
+          "raw_rows": 101,
+          "in_target": 22,
+          "new_vs_baseline": 0,
+          "new_only_this_action": 0,
+          "new_per_search": 0.0,
+          "new_per_minute": 0.0,
+          "overlap_with_baseline": 22,
+          "errors": [],
+          "new_ids": []
+        },
+        {
+          "action": "shift",
+          "searches": 1,
+          "seconds": 132.83,
+          "raw_rows": 106,
+          "in_target": 29,
+          "new_vs_baseline": 0,
+          "new_only_this_action": 0,
+          "new_per_search": 0.0,
+          "new_per_minute": 0.0,
+          "overlap_with_baseline": 29,
+          "errors": [],
+          "new_ids": []
+        },
+        {
+          "action": "split",
+          "searches": 4,
+          "seconds": 493.12,
+          "raw_rows": 400,
+          "in_target": 43,
+          "new_vs_baseline": 5,
+          "new_only_this_action": 5,
+          "new_per_search": 1.25,
+          "new_per_minute": 0.608,
+          "overlap_with_baseline": 38,
+          "errors": [],
+          "new_ids": [
+            "ChIJ3yHIwUvB5zsRbHcijWbAzHc",
+            "ChIJEz6m0k3B5zsRCTVsCKw9Hn4",
+            "ChIJHZYcF7fB5zsRhPdmWNZonWo",
+            "ChIJPQxp90zB5zsR_qjmAuW9nUw",
+            "ChIJXVkcJJzB5zsRZOWtBcteb8w"
+          ]
+        }
+      ],
+      "union_baseline_and_actions": 43,
+      "extra_over_baseline_all_actions": 5
+    },
+    {
+      "cell": "NE",
+      "baseline_in_target": 35,
+      "baseline_ids": [
+        "ChIJ-6R8LcvB5zsRRb3n8Y3FnvA",
+        "ChIJ1waj8E7B5zsREKYsrFtLBSY",
+        "ChIJ46TMsjbB5zsRXvacE2qzeaE",
+        "ChIJ8wNE8o3B5zsRokRmJ42V2dE",
+        "ChIJ9R1i7k7B5zsRs42mdEXCLjE",
+        "ChIJASYGvUXB5zsRXWbio9VyNs4",
+        "ChIJFZFkX07B5zsRi_psbHh-RsY",
+        "ChIJJxfHk07B5zsRuVEP84QfiD8",
+        "ChIJK8628k7B5zsRKMaDMoPZH7o",
+        "ChIJKUp-NaDB5zsR7LUGOsdZpdQ",
+        "ChIJN4NCy-3B5zsRsXkDUGrjL7o",
+        "ChIJPQU7AU_B5zsRuCZqq8YCgCg",
+        "ChIJS5h03erB5zsRB6T_UxjnNoQ",
+        "ChIJVQ-uQSnB5zsRc6jwY4O4BG8",
+        "ChIJWaaGqHfB5zsRbN30M89s9Ts",
+        "ChIJZ6ytxa3B5zsRJyEv3hb6XMA",
+        "ChIJ__9uYEnB5zsRz0NYESDAwDU",
+        "ChIJ_z48cQDB5zsRoYKYBeZnctU",
+        "ChIJc3vI9U7B5zsR6iXLxMy4zjg",
+        "ChIJeQ6pChDB5zsRmntGpKgvlWQ",
+        "ChIJgYzveqXB5zsRnrWCPlOMYo4",
+        "ChIJhUvV32DB5zsRNwenZuE_wrc",
+        "ChIJhbcFLADB5zsRMXMavCQQ4ww",
+        "ChIJi3TWHLvB5zsR_173enPTpY8",
+        "ChIJjbGnkk7B5zsRrVdwW7DlO8M",
+        "ChIJjdc-GSjB5zsReAHklJXT53E",
+        "ChIJlTZM22PB5zsRTe7-hV6e3Tk",
+        "ChIJoYsMeTXB5zsRhoiJVwf_DSc",
+        "ChIJq1WadgDB5zsRKPLQjmT376k",
+        "ChIJrYfZg5XB5zsR9MDGyJhOazY",
+        "ChIJvyrV_E7B5zsRqd-vRwIK2UU",
+        "ChIJy4DAsjbB5zsRvtdGv-0f9ns",
+        "ChIJyULoxInB5zsRNe-VfTzSMmg",
+        "ChIJz2FHgPrB5zsRLWg1KAaEemo",
+        "ChIJz4ymU9LB5zsRaWJery2GE3A"
+      ],
+      "actions": [
+        {
+          "action": "zoom_in",
+          "searches": 1,
+          "seconds": 108.56,
+          "raw_rows": 89,
+          "in_target": 26,
+          "new_vs_baseline": 2,
+          "new_only_this_action": 0,
+          "new_per_search": 2.0,
+          "new_per_minute": 1.105,
+          "overlap_with_baseline": 24,
+          "errors": [],
+          "new_ids": [
+            "ChIJX_9NqU_B5zsRAY-kUvyA7CY",
+            "ChIJaRt6wv7B5zsR89rb_IQyJBA"
+          ]
+        },
+        {
+          "action": "shift",
+          "searches": 1,
+          "seconds": 109.63,
+          "raw_rows": 91,
+          "in_target": 34,
+          "new_vs_baseline": 5,
+          "new_only_this_action": 0,
+          "new_per_search": 5.0,
+          "new_per_minute": 2.736,
+          "overlap_with_baseline": 29,
+          "errors": [],
+          "new_ids": [
+            "ChIJA-USnoPB5zsRbfczs_Ca3XE",
+            "ChIJQ9X8v1fB5zsR4GwMlm3wbhE",
+            "ChIJb6hP_srB5zsRqNj54ndlsaY",
+            "ChIJk1HUUqvB5zsR_MzB9-fZl5k",
+            "ChIJzebxdznB5zsRMcywokyA9HE"
+          ]
+        },
+        {
+          "action": "split",
+          "searches": 4,
+          "seconds": 468.77,
+          "raw_rows": 377,
+          "in_target": 44,
+          "new_vs_baseline": 10,
+          "new_only_this_action": 3,
+          "new_per_search": 2.5,
+          "new_per_minute": 1.28,
+          "overlap_with_baseline": 34,
+          "errors": [],
+          "new_ids": [
+            "ChIJ35Gr807B5zsRTXTnoOdqfoM",
+            "ChIJA-USnoPB5zsRbfczs_Ca3XE",
+            "ChIJMV6mk07B5zsRMNylLqF2vog",
+            "ChIJQ9X8v1fB5zsR4GwMlm3wbhE",
+            "ChIJX_9NqU_B5zsRAY-kUvyA7CY",
+            "ChIJaRt6wv7B5zsR89rb_IQyJBA",
+            "ChIJb6hP_srB5zsRqNj54ndlsaY",
+            "ChIJk1HUUqvB5zsR_MzB9-fZl5k",
+            "ChIJw4m2YpPB5zsR4LwS95ryTSY",
+            "ChIJzebxdznB5zsRMcywokyA9HE"
+          ]
+        }
+      ],
+      "union_baseline_and_actions": 45,
+      "extra_over_baseline_all_actions": 10
+    }
+  ],
+  "observations": [
+    "Split was the only action that found new IDs in NW (+5) and it captured every new ID zoom/shift found in NE (+10 total, 3 only split found). But split does not strictly dominate: in SE, zoom_in found 3 IDs that split missed.",
+    "Efficiency per search: zoom_in 7 new / 4 searches (1.75/search), shift 5 / 4 (1.25/search), split 18 / 16 (1.125/search). Split gives the largest absolute gain per cell but at 4x the page cost; cheap viewport changes recover part of the same gain in some cells.",
+    "Cells that looked finished were not: baselines held only 14-38 in-target IDs (raw rows 89-111), yet actions added +6 (SE), +5 (NW), +10 (NE) IDs, i.e. 13-29% more than one search found. Across the circle, observed IDs rose from 87 to 108.",
+    "SW stayed empty under every action (10 searches total across Experiments 1-2, hundreds of raw rows, 0 in-target). That quadrant reads as genuinely sparse for 'restaurant' in Maps returns, and no action should keep spending there without a different keyword or reference check.",
+    "Zoom/shift overlap with the baseline is partial by design (they view a different window), so their in-target counts (e.g. NW zoom 22 of baseline 38) understate the baseline set; the compared quantity is new IDs, not rediscovery."
+  ],
+  "claim": "Action-comparison evidence only. Unions are larger observed sets, not every place in the cell. Total places unknown."
+}
