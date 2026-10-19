@@ -28,6 +28,25 @@ class UnresolvedCell:
 
 
 @dataclass(frozen=True)
+class CellTrace:
+    """One piece of the area and the decision made after looking at it."""
+
+    path: str
+    depth: int
+    decision: str
+    detail: str
+    rows: int
+    in_polygon: int
+    outside: int
+    new_ids: int
+    west: float
+    south: float
+    east: float
+    north: float
+    places: tuple[Place, ...]
+
+
+@dataclass(frozen=True)
 class CoverageReport:
     status: str
     raw_observations: int
@@ -38,6 +57,7 @@ class CoverageReport:
     cells_split: int
     unresolved: tuple[UnresolvedCell, ...]
     claim: str
+    cells: tuple[CellTrace, ...] = ()
 
 
 @dataclass
@@ -98,6 +118,8 @@ def discover(
     cells_split = 0
     provider_calls = 0
     unresolved: list[UnresolvedCell] = []
+    traces: list[CellTrace] = []
+    split_line = SATURATION_FRACTION * search.cap
 
     def clip(observations: list[Place]) -> tuple[list[Place], int]:
         kept: list[Place] = []
@@ -123,6 +145,43 @@ def discover(
     def mark_budget(tiles: list[_Tile]) -> None:
         for tile in tiles:
             unresolved.append(UnresolvedCell(path=tile.path, reason="BUDGET_EXHAUSTED"))
+            note(
+                tile,
+                "budget",
+                "The search limit was reached before this piece was searched.",
+                0,
+                [],
+                0,
+                0,
+            )
+
+    def note(
+        tile: _Tile,
+        decision: str,
+        detail: str,
+        rows: int,
+        kept: list[Place],
+        outside: int,
+        new_ids: int,
+    ) -> None:
+        west, south, east, north = projection.to_wgs84(tile.rect_m).bounds
+        traces.append(
+            CellTrace(
+                path=tile.path,
+                depth=tile.depth,
+                decision=decision,
+                detail=detail,
+                rows=rows,
+                in_polygon=len(kept),
+                outside=outside,
+                new_ids=new_ids,
+                west=float(west),
+                south=float(south),
+                east=float(east),
+                north=float(north),
+                places=tuple(kept),
+            )
+        )
 
     while queue:
         tile = queue.pop(0)
@@ -140,26 +199,63 @@ def discover(
             primary = search.search(effective, variant="primary")
         except ProviderError:
             unresolved.append(UnresolvedCell(path=tile.path, reason="PROVIDER_ERROR"))
+            note(tile, "fetch_failed", "The fetch failed. No rows were invented.", 0, [], 0, 0)
             continue
         cells_searched += 1
         raw_observations += len(primary)
         kept, outside = clip(primary)
         out_of_polygon_rows += outside
+        before = set(found)
         remember(kept)
+        fresh = [place for place in kept if place.place_id not in before]
 
         splittable = _can_split(tile, min_cell_m=min_cell_m, max_depth=max_depth)
         if _saturated(len(primary), search.cap):
             if splittable:
                 _enqueue_children(queue, tile, region_m)
                 cells_split += 1
+                note(
+                    tile,
+                    "split",
+                    (
+                        f"This page returned {len(primary)} rows. "
+                        f"The split line is {split_line:.0f} of {search.cap}, "
+                        "so the piece was quartered."
+                    ),
+                    len(primary),
+                    kept,
+                    outside,
+                    len(fresh),
+                )
                 continue
             unresolved.append(UnresolvedCell(path=tile.path, reason="MIN_GEOMETRY"))
+            note(
+                tile,
+                "too_small",
+                (
+                    f"This page returned {len(primary)} rows, which is past the split line, "
+                    "and the piece is already at the smallest allowed size."
+                ),
+                len(primary),
+                kept,
+                outside,
+                len(fresh),
+            )
             continue
 
         probe_new: list[Place] = []
         if _probe_selected(tile.path, seed, probe_fraction):
             if not spend():
                 unresolved.append(UnresolvedCell(path=tile.path, reason="BUDGET_EXHAUSTED"))
+                note(
+                    tile,
+                    "budget",
+                    "The search limit was reached after this page, before a second look.",
+                    len(primary),
+                    kept,
+                    outside,
+                    len(fresh),
+                )
                 mark_budget(queue)
                 queue.clear()
                 break
@@ -167,21 +263,67 @@ def discover(
                 probed = search.search(effective, variant="probe")
             except ProviderError:
                 unresolved.append(UnresolvedCell(path=tile.path, reason="PROVIDER_ERROR"))
+                note(
+                    tile,
+                    "fetch_failed",
+                    "A second look failed. The first page is listed below.",
+                    len(primary),
+                    kept,
+                    outside,
+                    len(fresh),
+                )
                 continue
             raw_observations += len(probed)
             probe_kept, probe_outside = clip(probed)
             out_of_polygon_rows += probe_outside
             primary_ids = {place.place_id for place in kept}
             probe_new = [place for place in probe_kept if place.place_id not in primary_ids]
+            before_probe = set(found)
             remember(probe_kept)
+            fresh.extend(place for place in probe_new if place.place_id not in before_probe)
+            kept = [*kept, *probe_new]
+            outside += probe_outside
 
         if probe_new and splittable:
             _enqueue_children(queue, tile, region_m)
             cells_split += 1
+            note(
+                tile,
+                "split",
+                "A second look found places the first page hid, so the piece was quartered.",
+                len(primary),
+                kept,
+                outside,
+                len(fresh),
+            )
             continue
         if probe_new and not splittable:
             unresolved.append(UnresolvedCell(path=tile.path, reason="RANKING_RISK"))
+            note(
+                tile,
+                "ranking_risk",
+                (
+                    "A second look found places the first page hid, "
+                    "and the piece cannot shrink further."
+                ),
+                len(primary),
+                kept,
+                outside,
+                len(fresh),
+            )
             continue
+        note(
+            tile,
+            "stop",
+            (
+                f"This page returned {len(primary)} rows, under the split line of "
+                f"{split_line:.0f} of {search.cap}, so it was not quartered."
+            ),
+            len(primary),
+            kept,
+            outside,
+            len(fresh),
+        )
 
     status = _status(unresolved)
     ordered = tuple(sorted(found))
@@ -195,6 +337,7 @@ def discover(
         cells_split=cells_split,
         unresolved=tuple(unresolved),
         claim=f"{len(ordered)} place IDs discovered; total available places unknown",
+        cells=tuple(traces),
     )
 
 

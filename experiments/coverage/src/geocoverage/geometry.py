@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -45,6 +46,32 @@ def require_region(region: BaseGeometry) -> None:
         raise InvalidGeometryError("region must be a non-empty Polygon or MultiPolygon")
     if not region.is_valid:
         raise InvalidGeometryError("region geometry is invalid")
+
+
+def circle_region(lat: float, lon: float, radius_km: float) -> Polygon:
+    """A circle of ``radius_km`` around one WGS84 point, in longitude/latitude order.
+
+    The radius is meters on the local projection, so it is a ground distance
+    rather than a degree radius. The planner's first map view is the square
+    around this circle. Points in that square but outside the circle are dropped.
+    """
+    if not math.isfinite(lat) or not -90.0 <= lat <= 90.0:
+        raise ValueError("latitude must be between -90 and 90")
+    if not math.isfinite(lon) or not -180.0 <= lon <= 180.0:
+        raise ValueError("longitude must be between -180 and 180")
+    if not math.isfinite(radius_km) or radius_km <= 0 or radius_km > 20:
+        raise ValueError("radius_km must be greater than 0 and at most 20")
+    projection = local_projection(Point(lon, lat))
+    circle_m = projection.point_meters(lon, lat).buffer(radius_km * 1000.0, quad_segs=32)
+    region = projection.to_wgs84(circle_m)
+    if not isinstance(region, Polygon):
+        raise InvalidGeometryError("circle did not produce a polygon")
+    if not region.is_valid:
+        region = region.buffer(0)
+    require_region(region)
+    if not isinstance(region, Polygon):
+        raise InvalidGeometryError("circle did not produce a polygon")
+    return region
 
 
 def local_projection(region: BaseGeometry) -> LocalProjection:

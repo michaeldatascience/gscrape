@@ -172,7 +172,7 @@ def test_parse_keeps_place_id_and_rank_and_rejects_malformed_rows() -> None:
         )
     )
     assert places == [
-        Place("aaa", lon=-0.1, lat=51.5, rank=0),
+        Place("aaa", lon=-0.1, lat=51.5, rank=0, label="Cafe"),
         Place("bbb", lon=-0.2, lat=51.6, rank=2),
     ]
     assert parse_gosom_places("") == []
@@ -341,7 +341,8 @@ def test_subprocess_runner_reads_place_ids_and_redacts_proxy_stderr(tmp_path: Pa
     view = MapView(lat=51.5, lon=-0.12, zoom=15)
     text = runner.fetch(keyword="coffee", view=view)
     places = parse_gosom_places(text)
-    assert places == [Place("pid-1", lon=-0.12, lat=51.5, rank=0)]
+    assert places == [Place("pid-1", lon=-0.12, lat=51.5, rank=0, label="hidden")]
+    assert not hasattr(places[0], "phone")
     with pytest.raises(ProviderError, match="budget"):
         runner.fetch(keyword="coffee", view=view)
 

@@ -372,7 +372,9 @@ def _place_from_row(row: object, index: int) -> Place:
     )
     if not -90 <= lat <= 90 or not -180 <= lon <= 180:
         raise ProviderError(f"gosom row {index} has coordinates outside WGS84")
-    return Place(place_id=place_id.strip(), lon=lon, lat=lat, rank=index)
+    title = row.get("title")
+    label = title.strip() if isinstance(title, str) else ""
+    return Place(place_id=place_id.strip(), lon=lon, lat=lat, rank=index, label=label)
 
 
 def parse_gosom_places(text: str) -> list[Place]:

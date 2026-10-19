@@ -18,6 +18,7 @@ class Place:
     lon: float
     lat: float
     rank: int
+    label: str = ""
 
 
 class ProviderError(RuntimeError):
