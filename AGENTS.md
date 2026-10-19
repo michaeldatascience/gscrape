@@ -8,17 +8,22 @@ Do not start `BUILD_PLAN.md` Phase 0. Do not scaffold FastAPI, Next.js, Celery, 
 
 Code that exists:
 
-- `experiments/coverage/` — offline Python package `geocoverage`. `MockSearch` is the only search adapter. It returns at most `cap` ranked places per view. A `hidden` mode drops a seeded subset even when the page is shorter than the cap.
-- Location input is a Shapely `Polygon` or `MultiPolygon` in `(longitude, latitude)` order. There is no city-name or address input. The fixture area is `box(0.0, 0.0, 0.02, 0.02)` in `experiments/coverage/src/geocoverage/fixtures.py`.
-- `discover()` in `planner.py` splits when a view returns at least 80% of that adapter's cap, probes quiet cells, and never emits a completeness percentage.
-- Verified on 2026-10-19 from `experiments/coverage`: `uv run pytest -q` passed 16 tests, `uv run ruff check src tests` passed, `uv run mypy src` passed. `uv run python -m geocoverage` reported a single search of 120 IDs and a planner result of 500 IDs, with 380 IDs only in the planner. Status for that fully observable fixture was `HIGH_EVIDENCE`, and the claim still says the total number of places is unknown.
+- `experiments/coverage/` — Python package `geocoverage`. `MockSearch` returns at most `cap` ranked places per view. A `hidden` mode drops a seeded subset even when the page is shorter than the cap.
+- `GosomSearch` in `experiments/coverage/src/geocoverage/gosom.py` is the live one-view adapter. One process gets `-geo` latitude,longitude, a zoom fitted to that cell, `-depth` at most 10, and `-c 1`. The argument builder rejects `-grid-bbox`, `-grid-cell`, and `-fast-mode`. Email and review crawling stay off. Parsed rows keep place ID, longitude, and latitude. The planner still clips to the polygon and still withholds a completeness percentage.
+- Location input is a Shapely `Polygon` or `MultiPolygon` in `(longitude, latitude)` order. There is no city-name or address input. The offline fixture area is `box(0.0, 0.0, 0.02, 0.02)` in `experiments/coverage/src/geocoverage/fixtures.py`. The opt-in live polygon is `experiments/coverage/regions/central_london.geojson`.
+- `discover()` in `planner.py` splits when a view returns at least 80% of that adapter's cap, probes quiet cells, and never emits a completeness percentage. The gosom cap constant is 120.
+- Verified on 2026-10-19 from `experiments/coverage`: `uv run pytest -q` passed 30 tests, `uv run ruff check src tests` passed, `uv run mypy src` passed. `uv run python -m geocoverage` still reports the mock fixture: one search of 120 IDs and a planner result of 500 IDs, with 380 IDs only in the planner.
 - `hidden_70_of_150` stays `UNRESOLVED` with `RANKING_RISK`. A one-search budget stops at 120 IDs with `BUDGET_EXHAUSTED`.
 
-Next task, in order:
+Docker:
 
-1. Install Docker inside WSL Ubuntu 26.04. Checked 2026-10-19: `wsl -d Ubuntu` has no `docker` or `go` binary. The user is in group `docker` and `~/.docker` remains from an old Docker Desktop setup, but the engine is not running. Windows PowerShell also has no `docker` or `go`.
-2. Pull `gosom/google-maps-scraper` and use it only as a one-view fetch. Our planner chooses the cell. Do not let gosom's `-grid-bbox` own the subdivision, and do not enable `-fast-mode` (about 21 results, and incompatible with its grid). Post-filter every point to the requested polygon. gosom has no API key. Keep proxy URLs in a local file, never in chat.
-3. Run one small real comparison: one view versus this planner over the same keyword and polygon, with a hard cell budget. Compare place-ID sets. Do not claim the union is every listing.
+- WSL Ubuntu 26.04 was not changed. This session is a separate Ubuntu 24.04 machine, not that distro. `docker.io` 29.1.3 is installed here. systemd is offline, so the daemon was started with `dockerd --iptables=false --ip6tables=false`.
+- The WSL check from 2026-10-19 still stands for that machine: `wsl -d Ubuntu` had no `docker` or `go` binary. The user is in group `docker` and `~/.docker` remains from an old Docker Desktop setup, but that engine was not running. Windows PowerShell also had no `docker` or `go`.
+- Proxy URLs belong in `secrets/gosom-proxies.txt` (gitignored). No proxy file was added.
+
+Next task:
+
+1. Run one small real comparison once `gosom/google-maps-scraper` is pulled: `uv run python -m geocoverage.live --keyword coffee --polygon regions/central_london.geojson --max-searches 5` from `experiments/coverage`. Fast mode stays off. The fetch budget is 5 processes. Compare place-ID sets. Completeness stays unknown.
 
 Decision record: ADR-008 in `DECISIONS.md`.
 

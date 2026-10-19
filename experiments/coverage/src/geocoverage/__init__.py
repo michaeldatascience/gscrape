@@ -6,7 +6,15 @@ requested polygon. A quiet page is not treated as a complete census.
 """
 
 from geocoverage.compare import compare_searches
+from geocoverage.gosom import MAPS_VIEW_CAP, GosomSearch
 from geocoverage.planner import discover
 from geocoverage.search import MockSearch, Place
 
-__all__ = ["MockSearch", "Place", "compare_searches", "discover"]
+__all__ = [
+    "MAPS_VIEW_CAP",
+    "GosomSearch",
+    "MockSearch",
+    "Place",
+    "compare_searches",
+    "discover",
+]

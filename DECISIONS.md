@@ -40,6 +40,11 @@
 - **Decision:** The first code is `experiments/coverage`, an offline quadtree with a capped mock search. FastAPI, Next.js, and the rest of `BUILD_PLAN.md` wait. Apify is not the fetch step: its Maps actor already subdivides a region. The next live fetch, when Docker exists in WSL Ubuntu, is gosom used as one view per cell that this planner chooses.
 - **Reason:** The product risk is coverage past one map-search slice. Buying a finished Apify list does not test or own that splitter. A web stack cannot show whether the splitter found the places a single 120-row page dropped.
 
+## ADR-009: gosom is one view per planner cell
+- **Status:** Accepted.
+- **Decision:** `experiments/coverage` calls gosom once per cell the planner selects. The command is `-geo lat,lon`, `-zoom` fitted to that cell, `-depth` 1–10, `-c 1`, and `-json`. `-grid-bbox`, `-grid-cell`, and `-fast-mode` are rejected by the argument builder. Email and review crawling stay off. The process returns place ID, longitude, and latitude; other fields are dropped. The planner clips to the polygon. A repeated view in the same run reuses that page. The live comparison is opt-in, has a hard process budget, and reports completeness as unknown. Proxy URLs stay in a local file such as `secrets/gosom-proxies.txt` and are redacted from errors.
+- **Reason:** ADR-008 keeps subdivision in this planner. gosom's grid would replace that experiment, and fast mode stops near 21 rows. `BUILD_PLAN.md` Phase 5 still mentions `-grid-bbox` for a later full adapter; this experiment does not turn that grid on.
+
 ## Open items requiring measured decisions
 
 - Geography/boundary reference provider and commercial use license for each target country.
