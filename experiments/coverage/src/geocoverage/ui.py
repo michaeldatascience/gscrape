@@ -15,7 +15,9 @@ import socket
 import sys
 import threading
 from collections.abc import Callable
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import parse_qs, urlparse
 from urllib.request import urlopen
@@ -25,6 +27,8 @@ from geocoverage.gosom import redact, validate_keyword
 from geocoverage.session import SessionView, run_demo, run_live, view_payload
 
 _LIVE_IMAGE = "gosom/google-maps-scraper:latest"
+_LOG_FILE = Path(__file__).resolve().parents[2] / ".runs" / "viewer.log"
+_LOG_LOCK = threading.Lock()
 
 
 PAGE_HTML = """<!DOCTYPE html>
@@ -718,6 +722,20 @@ class _Job:
 _job = _Job()
 
 
+def log_line(text: str) -> None:
+    """Write one progress line to the terminal and to ``.runs/viewer.log``."""
+    stamp = datetime.now(UTC).strftime("%H:%M:%S")
+    line = f"{stamp}  {redact(text)}"
+    with _LOG_LOCK:
+        print(line, file=sys.stderr, flush=True)
+        try:
+            _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with _LOG_FILE.open("a", encoding="utf-8") as handle:
+                handle.write(line + "\n")
+        except OSError:
+            pass
+
+
 def job_snapshot() -> dict[str, object]:
     with _job.guard:
         payload: dict[str, object] = {
@@ -756,12 +774,16 @@ def begin_job(
         _job.message = "Starting."
         _job.error = ""
         _job.result = None
+        log_line(summary)
+        log_line("Starting.")
 
         def run() -> None:
             def progress(text: str) -> None:
                 with _job.guard:
-                    if _job.state == "running":
-                        _job.message = text
+                    if _job.state != "running":
+                        return
+                    _job.message = text
+                log_line(text)
 
             try:
                 view = work(progress)
@@ -771,11 +793,16 @@ def begin_job(
                     _job.state = "error"
                     _job.error = message
                     _job.message = message
+                log_line(message)
                 return
             with _job.guard:
                 _job.state = "done"
                 _job.result = view_payload(view)
                 _job.message = "Finished."
+            log_line(
+                f"Finished. One search {view.single_search_in_polygon}; "
+                f"after splitting {view.planner_in_polygon}; status {view.status}."
+            )
 
         thread = threading.Thread(target=run, daemon=True)
         _job.thread = thread
@@ -911,7 +938,10 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, fmt: str, *args: object) -> None:
-        sys.stderr.write(redact(fmt % args) + "\n")
+        line = fmt % args
+        if "/api/status" in line:
+            return
+        sys.stderr.write(redact(line) + "\n")
 
 
 class IPv6Server(ThreadingHTTPServer):
@@ -1039,6 +1069,8 @@ def _announce(
     if any(server.address_family == socket.AF_INET6 for server in servers):
         print(f"localhost also works: http://localhost:{port}/", file=sys.stderr)
     print("Search this area calls Google. The practice map does not.", file=sys.stderr)
+    print(f"Search progress: {_LOG_FILE}", file=sys.stderr)
+    print("Or watch this terminal. Status polls are not printed.", file=sys.stderr)
 
 
 def serve(host: str, port: int) -> None:

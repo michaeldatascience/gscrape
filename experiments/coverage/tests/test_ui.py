@@ -2,6 +2,7 @@ import json
 import socket
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -141,9 +142,13 @@ def test_status_starts_idle(viewer_url: str) -> None:
     assert body["state"] == "idle"
 
 
-def test_running_search_is_shown_instead_of_an_error(viewer_url: str) -> None:
+def test_running_search_is_shown_instead_of_an_error(
+    viewer_url: str, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     started = threading.Event()
     release = threading.Event()
+    log_path = tmp_path / "viewer.log"
+    monkeypatch.setattr("geocoverage.ui._LOG_FILE", log_path)
 
     def work(progress: object) -> SessionView:
         assert callable(progress)
@@ -159,6 +164,9 @@ def test_running_search_is_shown_instead_of_an_error(viewer_url: str) -> None:
         )
         begin_job("live", summary, work)
         assert started.wait(2)
+        err = capsys.readouterr().err
+        assert "Opening map page 1." in err
+        assert "Opening map page 1." in log_path.read_text(encoding="utf-8")
         with urlopen(viewer_url + "/api/status", timeout=2) as response:
             body = json.loads(response.read().decode("utf-8"))
         assert body["state"] == "running"
