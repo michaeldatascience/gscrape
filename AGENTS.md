@@ -14,7 +14,7 @@ Code that exists:
 - `python -m geocoverage.session` prints the split tree and writes `experiments/coverage/.runs/session.html` (gitignored). `--demo` uses `MockSearch` and does not call Google.
 - `python -m geocoverage.ui` serves a localhost page on `127.0.0.1:8765`. The demo button draws the fake square. Search Google Maps is the live path and needs Docker. This is not the FastAPI or Next.js application.
 - `discover()` in `planner.py` splits when a view returns at least 80% of that adapter's cap, probes quiet cells, and never emits a completeness percentage. The gosom cap constant is 120.
-- Verified on 2026-10-19 from `experiments/coverage`: `uv run pytest -q` passed 44 tests, `uv run ruff check src tests` passed, `uv run mypy src` passed. `uv run python -m geocoverage.ui` serves the demo at `http://127.0.0.1:8765/`: one search keeps 120 IDs and the planner keeps 500, with 380 only after splitting. The whole area and the four quarters are quartered; the sixteen smaller pieces stop. Status for that fixture is `HIGH_EVIDENCE`, and the claim still says the total number of places is unknown.
+- Verified on 2026-10-19 from `experiments/coverage`: `uv run pytest -q` passed 47 tests, `uv run ruff check src tests` passed, `uv run mypy src` passed. `uv run python -m geocoverage.ui` serves the demo at `http://127.0.0.1:8765/`: one search keeps 120 IDs and the planner keeps 500, with 380 only after splitting. The whole area and the four quarters are quartered; the sixteen smaller pieces stop. Status for that fixture is `HIGH_EVIDENCE`, and the claim still says the total number of places is unknown.
 - `hidden_70_of_150` stays `UNRESOLVED` with `RANKING_RISK`. A one-search budget stops at 120 IDs with `BUDGET_EXHAUSTED`.
 - Live gosom image: `gosom/google-maps-scraper@sha256:e205c02913c5a69c16fc2094b8e5b194a2f655166d2c1126d50548d216e6b1b2`. Fast mode and grid mode were off. No proxy file was used.
 
@@ -37,7 +37,7 @@ uv run python -m geocoverage.session --demo
 uv run python -m geocoverage.session --lat 51.514 --lon -0.1325 --radius-km 0.9 --keyword restaurant --max-searches 5
 ```
 
-Open `http://127.0.0.1:8765/`. Run the demo draws the split. Stop after 1 search shows the pieces the limit never reached. Play the split rewinds the depth. Search Google Maps uses the latitude, longitude, radius, and keyword on the page.
+Open the `http://127.0.0.1:.../` URL the command prints. If 8765 is already the viewer, the command says it is already running and prints that same address. Use `127.0.0.1`, because a `localhost` tab can look only at IPv6. Run the demo draws the split. Stop after 1 search shows the pieces the limit never reached. Play the split rewinds the depth. Search Google Maps uses the latitude, longitude, radius, and keyword on the page.
 
 The demo does not call Google. The second command does, and each full page can take a few minutes. Docker on the user's WSL Ubuntu 26.04 is still absent, so the live command needs Docker there (or on a machine that already has it). The restaurant comparison's 16 grandchild cells are still `BUDGET_EXHAUSTED`. Do not treat 224 as the number of restaurants in that polygon.
 

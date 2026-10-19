@@ -8,13 +8,17 @@ application.
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import math
+import socket
 import sys
 import threading
 from collections.abc import Callable
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.error import URLError
 from urllib.parse import parse_qs, urlparse
+from urllib.request import urlopen
 
 from geocoverage.geometry import circle_region
 from geocoverage.gosom import redact, validate_keyword
@@ -743,6 +747,10 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write(redact(fmt % args) + "\n")
 
 
+class IPv6Server(ThreadingHTTPServer):
+    address_family = socket.AF_INET6
+
+
 def bind_host(host: str) -> str:
     if host == "localhost":
         return "127.0.0.1"
@@ -751,15 +759,108 @@ def bind_host(host: str) -> str:
     return host
 
 
-def serve(host: str, port: int) -> None:
-    httpd = ThreadingHTTPServer((bind_host(host), port), Handler)
-    url = f"http://127.0.0.1:{httpd.server_port}/"
-    print(f"Open {url}", file=sys.stderr)
-    print("The demo button does not call Google. Search Google Maps does.", file=sys.stderr)
+def probe_viewer(port: int) -> str | None:
+    """Return the URL if this port is already serving the coverage page."""
+    for url in (f"http://127.0.0.1:{port}/", f"http://[::1]:{port}/"):
+        try:
+            with urlopen(url, timeout=0.4) as response:
+                if response.status != 200:
+                    continue
+                chunk = response.read(4096)
+        except (OSError, URLError, TimeoutError):
+            continue
+        if b"Coverage viewer" in chunk:
+            return url
+    return None
+
+
+def open_servers(port: int) -> list[ThreadingHTTPServer]:
+    """Listen on the IPv4 loopback and, when the machine has it, IPv6 loopback."""
+    if port == 0:
+        return [ThreadingHTTPServer(("127.0.0.1", 0), Handler)]
+    v4 = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    servers: list[ThreadingHTTPServer] = [v4]
     try:
-        httpd.serve_forever()
+        servers.append(IPv6Server(("::1", port), Handler))
+    except OSError as exc:
+        if exc.errno == errno.EADDRINUSE:
+            v4.server_close()
+            raise
+    return servers
+
+
+def plan_listen(start: int, *, attempts: int = 20) -> tuple[str | None, list[ThreadingHTTPServer]]:
+    """Reuse a viewer that is already up, or bind the next free loopback port."""
+    if start == 0:
+        return None, open_servers(0)
+    last_error: OSError | None = None
+    for offset in range(attempts):
+        port = start + offset
+        if port > 65535:
+            break
+        found = probe_viewer(port)
+        if found is not None:
+            return found, []
+        try:
+            return None, open_servers(port)
+        except OSError as exc:
+            last_error = exc
+            if exc.errno != errno.EADDRINUSE:
+                raise
+    message = "address already in use" if last_error is None else last_error.strerror
+    raise OSError(errno.EADDRINUSE, message)
+
+
+def _close_servers(servers: list[ThreadingHTTPServer]) -> None:
+    for server in servers:
+        server.server_close()
+
+
+def _serve(servers: list[ThreadingHTTPServer]) -> None:
+    threads: list[threading.Thread] = []
+    for extra in servers[1:]:
+        thread = threading.Thread(target=extra.serve_forever, daemon=True)
+        thread.start()
+        threads.append(thread)
+    try:
+        servers[0].serve_forever()
     except KeyboardInterrupt:
-        httpd.shutdown()
+        pass
+    finally:
+        for extra in servers[1:]:
+            extra.shutdown()
+        for server in servers:
+            server.server_close()
+        for thread in threads:
+            thread.join(timeout=2)
+
+
+def _announce(requested: int, url: str | None, servers: list[ThreadingHTTPServer]) -> None:
+    if url is not None:
+        print(f"The viewer is already running.\nOpen {url}", file=sys.stderr)
+        print(
+            "Open that 127.0.0.1 address. A localhost tab can miss a server that is only on IPv4.",
+            file=sys.stderr,
+        )
+        return
+    port = int(servers[0].server_address[1])
+    print(f"Open http://127.0.0.1:{port}/", file=sys.stderr)
+    if requested not in {0, port}:
+        print(f"Port {requested} was already in use, so this one is {port}.", file=sys.stderr)
+    if any(server.address_family == socket.AF_INET6 for server in servers):
+        print(f"localhost also works: http://localhost:{port}/", file=sys.stderr)
+    print("The demo button does not call Google. Search Google Maps does.", file=sys.stderr)
+
+
+def serve(host: str, port: int) -> None:
+    if host != "127.0.0.1":
+        raise ValueError("the viewer binds to localhost only")
+    url, servers = plan_listen(port)
+    if url is not None:
+        _announce(port, url, servers)
+        return
+    _announce(port, None, servers)
+    _serve(servers)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -778,7 +879,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         serve(host, args.port)
     except OSError as exc:
-        print(f"Could not listen on {host}:{args.port}: {exc}", file=sys.stderr)
+        print(f"Could not listen on 127.0.0.1:{args.port}: {exc}", file=sys.stderr)
         return 1
     return 0
 

@@ -1,4 +1,5 @@
 import json
+import socket
 import threading
 from http.server import ThreadingHTTPServer
 from urllib.error import HTTPError
@@ -10,7 +11,7 @@ from shapely.geometry import box
 from geocoverage.planner import CellTrace
 from geocoverage.search import Place
 from geocoverage.session import SessionView, run_demo, view_payload
-from geocoverage.ui import PAGE_HTML, Handler, main
+from geocoverage.ui import PAGE_HTML, Handler, main, plan_listen
 
 
 @pytest.fixture
@@ -136,3 +137,67 @@ def test_live_form_is_rejected_before_a_scrape(viewer_url: str) -> None:
 def test_viewer_refuses_a_public_host() -> None:
     with pytest.raises(SystemExit):
         main(["--host", "0.0.0.0", "--port", "8765"])
+
+
+def test_running_viewer_is_reused(viewer_url: str, capsys: pytest.CaptureFixture[str]) -> None:
+    port = viewer_url.rsplit(":", 1)[-1]
+    assert main(["--port", port]) == 0
+    err = capsys.readouterr().err
+    assert "already running" in err
+    assert f"http://127.0.0.1:{port}/" in err
+
+
+def test_taken_port_moves_to_the_next_free_one() -> None:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("127.0.0.1", 0))
+    sock.listen(1)
+    busy = int(sock.getsockname()[1])
+    try:
+        url, servers = plan_listen(busy)
+    finally:
+        sock.close()
+    assert url is None
+    try:
+        assert servers
+        assert int(servers[0].server_address[1]) != busy
+    finally:
+        for server in servers:
+            server.server_close()
+
+
+def _ipv6_loopback_works() -> bool:
+    try:
+        skipped = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        skipped.bind(("::1", 0))
+    except OSError:
+        return False
+    skipped.close()
+    return True
+
+
+def test_new_viewer_answers_on_ipv4_and_ipv6() -> None:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("127.0.0.1", 0))
+    port = int(sock.getsockname()[1])
+    sock.close()
+    _url, servers = plan_listen(port)
+    threads: list[threading.Thread] = []
+    try:
+        for server in servers:
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            threads.append(thread)
+        bound = int(servers[0].server_address[1])
+        with urlopen(f"http://127.0.0.1:{bound}/", timeout=2) as response:
+            assert b"Coverage viewer" in response.read(2000)
+        has_v6 = any(server.address_family == socket.AF_INET6 for server in servers)
+        if _ipv6_loopback_works():
+            assert has_v6
+            with urlopen(f"http://[::1]:{bound}/", timeout=2) as response:
+                assert response.status == 200
+    finally:
+        for server in servers:
+            server.shutdown()
+            server.server_close()
+        for thread in threads:
+            thread.join(timeout=2)
