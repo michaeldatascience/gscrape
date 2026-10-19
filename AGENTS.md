@@ -29,10 +29,15 @@ Live comparison, same polygon, hard budget of 5 gosom processes:
 - Keyword `coffee`, depth 10, zoom 15: one process returned 75 rows. 41 were inside the polygon and 34 were outside. 75 is under the split line (80% of 120), so the planner did not split. Both arms have the same 41 IDs. Summary: `experiments/coverage/results/central_london_coffee_depth10.json`.
 - Keyword `restaurant`, depth 20: the root view returned 118 rows, 68 inside the polygon and 50 outside. The four child views returned 119, 119, 120, and 119 rows. Every child was at the maps slice, so each was split, and the budget then stopped. The planner kept 224 in-polygon IDs. 68 were also in the single view. 156 were only in the planner. None were only in the single view. Status is `BUDGET_EXHAUSTED`. Completeness is unknown. Summary: `experiments/coverage/results/central_london_restaurant.json`.
 
-Try it from `experiments/coverage`:
+From the repository root, or from `experiments/coverage`:
 
 ```
 uv run python -m geocoverage.ui
+```
+
+The text session still runs from `experiments/coverage`:
+
+```
 uv run python -m geocoverage.session --demo
 uv run python -m geocoverage.session --lat 51.514 --lon -0.1325 --radius-km 0.9 --keyword restaurant --max-searches 5
 ```

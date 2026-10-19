@@ -926,19 +926,23 @@ def bind_host(host: str) -> str:
     return host
 
 
-def probe_viewer(port: int) -> str | None:
-    """Return the URL if this port is already serving the coverage page."""
+def _read_loopback(port: int) -> bytes:
     for url in (f"http://127.0.0.1:{port}/", f"http://[::1]:{port}/"):
         try:
             with urlopen(url, timeout=0.4) as response:
                 if response.status != 200:
                     continue
-                chunk = response.read(4096)
+                return response.read(80_000)
         except (OSError, URLError, TimeoutError):
             continue
-        if b"Coverage viewer" in chunk:
-            return url
-    return None
+    return b""
+
+
+def probe_viewer(port: int) -> str | None:
+    """Return the URL when this port is serving the current coverage page."""
+    if b"Search this area" not in _read_loopback(port):
+        return None
+    return f"http://127.0.0.1:{port}/"
 
 
 def open_servers(port: int) -> list[ThreadingHTTPServer]:
@@ -956,20 +960,31 @@ def open_servers(port: int) -> list[ThreadingHTTPServer]:
     return servers
 
 
-def plan_listen(start: int, *, attempts: int = 20) -> tuple[str | None, list[ThreadingHTTPServer]]:
-    """Reuse a viewer that is already up, or bind the next free loopback port."""
+def plan_listen(
+    start: int, *, attempts: int = 20
+) -> tuple[str | None, list[ThreadingHTTPServer], str]:
+    """Reuse the current viewer, or bind the next free loopback port.
+
+    The third value is a note when an older viewer is still holding a port.
+    """
     if start == 0:
-        return None, open_servers(0)
+        return None, open_servers(0), ""
     last_error: OSError | None = None
+    note = ""
     for offset in range(attempts):
         port = start + offset
         if port > 65535:
             break
-        found = probe_viewer(port)
-        if found is not None:
-            return found, []
+        chunk = _read_loopback(port)
+        if b"Search this area" in chunk:
+            return f"http://127.0.0.1:{port}/", [], ""
+        if b"Run the demo" in chunk and not note:
+            note = (
+                f"Port {port} is still the previous viewer. "
+                "Close the browser tab that shows Run the demo."
+            )
         try:
-            return None, open_servers(port)
+            return None, open_servers(port), note
         except OSError as exc:
             last_error = exc
             if exc.errno != errno.EADDRINUSE:
@@ -1002,7 +1017,12 @@ def _serve(servers: list[ThreadingHTTPServer]) -> None:
             thread.join(timeout=2)
 
 
-def _announce(requested: int, url: str | None, servers: list[ThreadingHTTPServer]) -> None:
+def _announce(
+    requested: int,
+    url: str | None,
+    servers: list[ThreadingHTTPServer],
+    note: str,
+) -> None:
     if url is not None:
         print(f"The viewer is already running.\nOpen {url}", file=sys.stderr)
         print(
@@ -1012,21 +1032,23 @@ def _announce(requested: int, url: str | None, servers: list[ThreadingHTTPServer
         return
     port = int(servers[0].server_address[1])
     print(f"Open http://127.0.0.1:{port}/", file=sys.stderr)
-    if requested not in {0, port}:
+    if note:
+        print(note, file=sys.stderr)
+    elif requested not in {0, port}:
         print(f"Port {requested} was already in use, so this one is {port}.", file=sys.stderr)
     if any(server.address_family == socket.AF_INET6 for server in servers):
         print(f"localhost also works: http://localhost:{port}/", file=sys.stderr)
-    print("The demo button does not call Google. Search Google Maps does.", file=sys.stderr)
+    print("Search this area calls Google. The practice map does not.", file=sys.stderr)
 
 
 def serve(host: str, port: int) -> None:
     if host != "127.0.0.1":
         raise ValueError("the viewer binds to localhost only")
-    url, servers = plan_listen(port)
+    url, servers, note = plan_listen(port)
     if url is not None:
-        _announce(port, url, servers)
+        _announce(port, url, servers, note)
         return
-    _announce(port, None, servers)
+    _announce(port, None, servers, note)
     _serve(servers)
 
 

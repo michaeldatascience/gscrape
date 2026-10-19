@@ -1,0 +1,12 @@
+[project]
+name = "gscrape"
+version = "0.0.0"
+description = "Run the coverage viewer from the repository root."
+requires-python = ">=3.12"
+dependencies = ["geocoverage"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+geocoverage = { path = "experiments/coverage", editable = true }

@@ -1,7 +1,7 @@
 import json
 import socket
 import threading
-from http.server import ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -191,6 +191,37 @@ def test_running_search_is_shown_instead_of_an_error(viewer_url: str) -> None:
         wait_job(5)
 
 
+def test_previous_viewer_gets_a_new_port() -> None:
+    class OldPage(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            body = b"<html><title>Coverage viewer</title><button>Run the demo</button></html>"
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, fmt: str, *args: object) -> None:
+            return
+
+    old = ThreadingHTTPServer(("127.0.0.1", 0), OldPage)
+    thread = threading.Thread(target=old.serve_forever, daemon=True)
+    thread.start()
+    busy = int(old.server_address[1])
+    url, servers, note = plan_listen(busy)
+    try:
+        assert url is None
+        assert servers
+        assert int(servers[0].server_address[1]) != busy
+        assert "previous viewer" in note
+        assert "Run the demo" in note
+    finally:
+        old.shutdown()
+        old.server_close()
+        thread.join(timeout=2)
+        for server in servers:
+            server.server_close()
+
+
 def test_viewer_refuses_a_public_host() -> None:
     with pytest.raises(SystemExit):
         main(["--host", "0.0.0.0", "--port", "8765"])
@@ -210,7 +241,7 @@ def test_taken_port_moves_to_the_next_free_one() -> None:
     sock.listen(1)
     busy = int(sock.getsockname()[1])
     try:
-        url, servers = plan_listen(busy)
+        url, servers, _note = plan_listen(busy)
     finally:
         sock.close()
     assert url is None
@@ -237,7 +268,7 @@ def test_new_viewer_answers_on_ipv4_and_ipv6() -> None:
     sock.bind(("127.0.0.1", 0))
     port = int(sock.getsockname()[1])
     sock.close()
-    _url, servers = plan_listen(port)
+    _url, servers, _note = plan_listen(port)
     threads: list[threading.Thread] = []
     try:
         for server in servers:
