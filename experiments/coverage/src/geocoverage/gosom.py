@@ -168,8 +168,12 @@ def view_for_geometry(
         raise ValueError("cell geometry is empty")
     minx, miny, maxx, maxy = geometry_m.bounds
     span_m = max(maxx - minx, maxy - miny)
-    centroid = geometry_m.centroid
-    lon, lat = projection.inverse.transform(float(centroid.x), float(centroid.y))
+    # The map URL is a rectangle around a center. The bounds center frames the
+    # cell; a centroid would drift on an L and can round to a different geo
+    # string than the same cell's bounding rectangle.
+    center_x = (minx + maxx) / 2.0
+    center_y = (miny + maxy) / 2.0
+    lon, lat = projection.inverse.transform(center_x, center_y)
     zoom = zoom_for_span(float(lat), span_m) + zoom_delta
     zoom = max(1, min(21, zoom))
     return MapView(lat=float(lat), lon=float(lon), zoom=zoom)

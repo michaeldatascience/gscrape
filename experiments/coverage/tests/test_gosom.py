@@ -8,7 +8,12 @@ from shapely.geometry import box
 
 from geocoverage.compare import compare_searches
 from geocoverage.fixtures import square_region
-from geocoverage.geometry import InvalidGeometryError, local_projection
+from geocoverage.geometry import (
+    InvalidGeometryError,
+    local_projection,
+    polygonal,
+    root_rect,
+)
 from geocoverage.gosom import (
     FORBIDDEN_FLAGS,
     MAPS_VIEW_CAP,
@@ -179,6 +184,18 @@ def test_redact_removes_proxy_urls() -> None:
     cleaned = redact(raw)
     assert "supersecret" not in cleaned
     assert "[redacted-url]" in cleaned
+
+
+def test_rectangle_bounds_and_polygon_share_one_map_view() -> None:
+    region = load_geojson_region(POLYGON)
+    projection = local_projection(region)
+    region_m = polygonal(projection.to_meters(region))
+    rect = root_rect(region_m)
+    effective = polygonal(rect.intersection(region_m))
+    bounding = view_for_geometry(rect, projection)
+    planner_root = view_for_geometry(effective, projection)
+    assert bounding.geo == planner_root.geo
+    assert bounding.zoom == planner_root.zoom == 15
 
 
 def test_london_polygon_is_geometry_and_dry_run_stays_one_view() -> None:
