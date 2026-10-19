@@ -11,7 +11,7 @@ from shapely.geometry import box
 from geocoverage.planner import CellTrace
 from geocoverage.search import Place
 from geocoverage.session import SessionView, run_demo, view_payload
-from geocoverage.ui import PAGE_HTML, Handler, main, plan_listen
+from geocoverage.ui import PAGE_HTML, Handler, begin_job, main, plan_listen, wait_job
 
 
 @pytest.fixture
@@ -29,9 +29,10 @@ def viewer_url() -> str:
 
 
 def test_page_is_local_and_builds_text_in_the_dom() -> None:
-    assert "Run the demo" in PAGE_HTML
+    assert "Search this area" in PAGE_HTML
+    assert "Practice map" in PAGE_HTML
+    assert "does not use the latitude" in PAGE_HTML
     assert "Play the split" in PAGE_HTML
-    assert "Search Google Maps" in PAGE_HTML
     assert "innerHTML" not in PAGE_HTML
     assert "<script src" not in PAGE_HTML
     assert "cdn." not in PAGE_HTML
@@ -98,7 +99,7 @@ def test_payload_keeps_a_label_as_data() -> None:
 def test_demo_endpoint_returns_the_split(viewer_url: str) -> None:
     page = urlopen(viewer_url + "/", timeout=5)
     assert page.status == 200
-    assert b"Run the demo" in page.read()
+    assert b"Search this area" in page.read()
     with urlopen(viewer_url + "/api/demo?max_searches=30", timeout=10) as response:
         payload = json.loads(response.read().decode("utf-8"))
     assert payload["planner_in_polygon"] == 500
@@ -132,6 +133,62 @@ def test_live_form_is_rejected_before_a_scrape(viewer_url: str) -> None:
         assert caught.value.code == 400
         payload = json.loads(caught.value.read().decode("utf-8"))
         assert payload["error"]
+
+
+def test_status_starts_idle(viewer_url: str) -> None:
+    with urlopen(viewer_url + "/api/status", timeout=2) as response:
+        body = json.loads(response.read().decode("utf-8"))
+    assert body["state"] == "idle"
+
+
+def test_running_search_is_shown_instead_of_an_error(viewer_url: str) -> None:
+    started = threading.Event()
+    release = threading.Event()
+
+    def work(progress: object) -> SessionView:
+        assert callable(progress)
+        progress("Opening map page 1.")
+        started.set()
+        release.wait(5)
+        return run_demo(max_searches=1, min_cell_m=200)
+
+    try:
+        summary = (
+            "Google Maps search for 'restaurant' within 0.9 km "
+            "of latitude 19.0164, longitude 73.0373."
+        )
+        begin_job("live", summary, work)
+        assert started.wait(2)
+        with urlopen(viewer_url + "/api/status", timeout=2) as response:
+            body = json.loads(response.read().decode("utf-8"))
+        assert body["state"] == "running"
+        assert "latitude 19.0164" in body["summary"]
+        request = Request(
+            viewer_url + "/api/live",
+            data=json.dumps(
+                {
+                    "lat": 19.0164,
+                    "lon": 73.0373,
+                    "radius_km": 0.9,
+                    "keyword": "cafe",
+                    "max_searches": 1,
+                }
+            ).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with urlopen(request, timeout=2) as response:
+            again = json.loads(response.read().decode("utf-8"))
+        assert again["state"] == "running"
+        assert "already running" in again["message"]
+        assert "restaurant" in again["summary"]
+        with pytest.raises(HTTPError) as caught:
+            urlopen(viewer_url + "/api/demo", timeout=2)
+        assert caught.value.code == 409
+        detail = json.loads(caught.value.read().decode("utf-8"))
+        assert "practice map" in detail["error"]
+    finally:
+        release.set()
+        wait_job(5)
 
 
 def test_viewer_refuses_a_public_host() -> None:

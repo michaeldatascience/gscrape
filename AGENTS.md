@@ -37,7 +37,7 @@ uv run python -m geocoverage.session --demo
 uv run python -m geocoverage.session --lat 51.514 --lon -0.1325 --radius-km 0.9 --keyword restaurant --max-searches 5
 ```
 
-Open the `http://127.0.0.1:.../` URL the command prints. If 8765 is already the viewer, the command says it is already running and prints that same address. Use `127.0.0.1`, because a `localhost` tab can look only at IPv6. Run the demo draws the split. Stop after 1 search shows the pieces the limit never reached. Play the split rewinds the depth. Search Google Maps uses the latitude, longitude, radius, and keyword on the page.
+Open the `http://127.0.0.1:.../` URL the command prints. If 8765 is already the viewer, the command says it is already running and prints that same address. Use `127.0.0.1`, because a `localhost` tab can look only at IPv6. The form searches a circle around a latitude and longitude. The practice map is a fake square and does not use those coordinates. A second click while a Google Maps search is running shows that search instead of starting another one.
 
 The demo does not call Google. The second command does, and each full page can take a few minutes. Docker on the user's WSL Ubuntu 26.04 is still absent, so the live command needs Docker there (or on a machine that already has it). The restaurant comparison's 16 grandchild cells are still `BUDGET_EXHAUSTED`. Do not treat 224 as the number of restaurants in that polygon.
 

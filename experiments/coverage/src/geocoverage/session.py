@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import html
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,7 +23,7 @@ from geocoverage.geometry import circle_region, local_projection
 from geocoverage.gosom import GosomSearch, WorkspaceRunner, validate_keyword
 from geocoverage.live import load_geojson_region
 from geocoverage.planner import SATURATION_FRACTION, CellTrace
-from geocoverage.search import MockSearch, Place
+from geocoverage.search import MockSearch, Place, SearchAdapter, SearchVariant
 
 DEFAULT_HTML = Path(__file__).resolve().parents[2] / ".runs" / "session.html"
 QUADRANTS = {"0": "SW", "1": "SE", "2": "NW", "3": "NE"}
@@ -262,6 +263,30 @@ def run_demo(*, max_searches: int, min_cell_m: float) -> SessionView:
     )
 
 
+class _ReportingSearch:
+    """Count map pages so the viewer can say which page is open."""
+
+    def __init__(self, inner: SearchAdapter, progress: Callable[[str], None]) -> None:
+        self._inner = inner
+        self._progress = progress
+        self._pages = 0
+        self.cap = inner.cap
+        self.projection = inner.projection
+
+    def search(
+        self,
+        geometry_m: BaseGeometry,
+        *,
+        variant: SearchVariant = "primary",
+    ) -> list[Place]:
+        self._pages += 1
+        page = self._pages
+        self._progress(f"Opening map page {page}. A full page can take a few minutes.")
+        places = self._inner.search(geometry_m, variant=variant)
+        self._progress(f"Map page {page} returned {len(places)} rows.")
+        return places
+
+
 def run_live(
     region: BaseGeometry,
     *,
@@ -276,6 +301,7 @@ def run_live(
     lang: str,
     exit_on_inactivity: str,
     area_label: str = "",
+    progress: Callable[[str], None] | None = None,
 ) -> SessionView:
     runner = WorkspaceRunner(
         mode="binary" if binary else "docker",
@@ -289,7 +315,10 @@ def run_live(
         fetch_budget=max_searches + 1,
     )
     projection = local_projection(region)
-    search = GosomSearch(keyword=keyword, projection=projection, fetcher=runner)
+    gosom = GosomSearch(keyword=keyword, projection=projection, fetcher=runner)
+    search: SearchAdapter = gosom
+    if progress is not None:
+        search = _ReportingSearch(gosom, progress)
     comparison = compare_searches(
         region,
         search,

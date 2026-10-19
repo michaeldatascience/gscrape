@@ -24,7 +24,6 @@ from geocoverage.geometry import circle_region
 from geocoverage.gosom import redact, validate_keyword
 from geocoverage.session import SessionView, run_demo, run_live, view_payload
 
-_RUN_LOCK = threading.Lock()
 _LIVE_IMAGE = "gosom/google-maps-scraper:latest"
 
 
@@ -58,7 +57,11 @@ body {
 header, main { max-width: 1120px; margin: 0 auto; padding: 1.2rem 1.2rem 0; }
 h1 { font-size: 1.9rem; font-weight: 600; margin: 0 0 0.3rem; }
 h2 { font-size: 1.15rem; margin: 0 0 0.4rem; }
-.lede, .note { color: var(--muted); margin: 0.2rem 0 0.8rem; }
+.lede, .note, .hint { color: var(--muted); }
+.lede, .note { margin: 0.2rem 0 0.8rem; }
+.hint { font-size: 0.8rem; }
+details { margin: 0 0 0.8rem; }
+details summary { cursor: pointer; color: var(--muted); }
 form, .panel, .stat {
   background: var(--card);
   border: 1px solid var(--line);
@@ -134,36 +137,43 @@ footer { max-width: 1120px; margin: 0 auto; padding: 0.8rem 1.2rem 2rem; color: 
 <body>
 <header>
   <h1>Coverage viewer</h1>
-  <p class="lede">One map view returns about 120 places. Quarter a piece when the page is full, and stop when the next page comes back short.</p>
+  <p class="lede">Search a circle around a latitude and longitude. One Google Maps page returns about 120 places. A full page is quartered. A short page stops.</p>
 </header>
 <main>
-  <form id="demo-form">
-    <button type="button" id="demo">Run the demo</button>
-    <button type="button" id="demo-budget" class="secondary">Stop after 1 search</button>
-    <label>Max searches
-      <input id="demo-limit" type="number" min="1" max="200" value="30"/>
-    </label>
-  </form>
   <form id="live-form">
     <label>Latitude
-      <input id="lat" type="text" value="51.514" autocomplete="off"/>
+      <input id="lat" type="text" value="19.0164" autocomplete="off"/>
+      <span class="hint">First number, from -90 to 90.</span>
     </label>
     <label>Longitude
-      <input id="lon" type="text" value="-0.1325" autocomplete="off"/>
+      <input id="lon" type="text" value="73.0373" autocomplete="off"/>
+      <span class="hint">Second number, from -180 to 180.</span>
     </label>
     <label>Radius km
       <input id="radius" type="text" value="0.9" autocomplete="off"/>
+      <span class="hint">Circle around that point. At most 20 km.</span>
     </label>
     <label>Keyword
       <input id="keyword" type="text" value="restaurant" autocomplete="off"/>
+      <span class="hint">Words to type into Maps, such as restaurant.</span>
     </label>
     <label>Max searches
       <input id="live-limit" type="number" min="1" max="12" value="5"/>
+      <span class="hint">How many extra pages after the first. Each can take minutes.</span>
     </label>
-    <button type="submit" id="search">Search Google Maps</button>
-    <p class="warn">Search Google Maps calls Google through a local scraper container. Each full page can take a few minutes. The demo button does not. The total number of places stays unknown.</p>
+    <button type="submit" id="search">Search this area</button>
+    <p class="warn">Search this area calls Google Maps. Leave this tab open. Refreshing does not start a second search; it shows the one already running. The total number of places stays unknown.</p>
   </form>
+  <details>
+    <summary>Practice map, without your coordinates</summary>
+    <p class="note">The practice map is a fake square of 500 places. It shows a full page being quartered, and a short page stopping. It does not call Google and it does not use the latitude and longitude above.</p>
+    <p>
+      <button type="button" id="demo">Show the practice map</button>
+      <button type="button" id="demo-budget" class="secondary">Show a 1-search stop</button>
+    </p>
+  </details>
   <p id="banner" role="status"></p>
+  <p id="idle-note" class="note">No search yet. Enter a latitude and longitude, then choose Search this area.</p>
   <section class="stats" id="stats" hidden>
     <div class="stat">One search<b id="one-search-count"></b></div>
     <div class="stat">After splitting<b id="planner-count"></b></div>
@@ -211,7 +221,7 @@ let report = null;
 let selectedPath = "0";
 let cutoff = 0;
 let timer = null;
-let busy = false;
+let pollTimer = null;
 
 function setDisabled(value) {
   ["demo", "demo-budget", "search", "play"].forEach((id) => {
@@ -249,6 +259,7 @@ function show(data) {
   slider.max = String(maxDepth);
   slider.value = String(maxDepth);
   cutoff = maxDepth;
+  document.getElementById("idle-note").hidden = true;
   document.getElementById("stats").hidden = false;
   document.getElementById("one-search-count").textContent = String(data.single_search_in_polygon);
   document.getElementById("planner-count").textContent = String(data.planner_in_polygon);
@@ -494,60 +505,107 @@ async function readJson(response) {
   return data;
 }
 
-async function loadDemo() {
-  if (busy) return;
-  stopPlay();
-  busy = true;
-  setDisabled(true);
-  document.getElementById("banner").textContent = "Running the demo…";
+function stopPoll() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+function schedulePoll() {
+  if (pollTimer) return;
+  pollTimer = setInterval(() => { refreshStatus(); }, 2000);
+}
+
+function applyStatus(data) {
+  const banner = document.getElementById("banner");
+  if (data.state === "running") {
+    const summary = data.summary ? data.summary + " " : "";
+    banner.textContent = summary + (data.message || "A search is still running. Leave this tab open.");
+    setDisabled(true);
+    schedulePoll();
+    return;
+  }
+  stopPoll();
+  setDisabled(false);
+  if (data.state === "done" && data.result) {
+    const failed = data.result.mode === "live" && data.result.cells.length > 0 &&
+      data.result.cells.every((cell) => cell.decision === "fetch_failed" || cell.decision === "budget");
+    banner.textContent = failed
+      ? "The coordinates were accepted, but no map page came back. Start Docker, then search again."
+      : (data.summary || "");
+    show(data.result);
+    return;
+  }
+  if (data.state === "error") {
+    banner.textContent = data.error || data.message || "The search failed.";
+  }
+}
+
+async function refreshStatus() {
   try {
-    const limit = document.getElementById("demo-limit").value;
-    const response = await fetch("/api/demo?max_searches=" + encodeURIComponent(limit));
-    show(await readJson(response));
-    document.getElementById("banner").textContent = "";
+    const response = await fetch("/api/status");
+    applyStatus(await readJson(response));
   } catch (error) {
-    document.getElementById("banner").textContent = error.message || "Demo failed";
-  } finally {
-    busy = false;
-    setDisabled(false);
+    document.getElementById("banner").textContent = error.message || "The viewer is not responding.";
+  }
+}
+
+async function loadDemo(limit) {
+  stopPlay();
+  document.getElementById("banner").textContent = "Drawing the practice map. This does not use your coordinates.";
+  try {
+    const response = await fetch("/api/demo?max_searches=" + encodeURIComponent(limit));
+    if (response.status === 409) {
+      document.getElementById("banner").textContent =
+        "A Google Maps search is still running, so the practice map is waiting.";
+      refreshStatus();
+      return;
+    }
+    show(await readJson(response));
+    document.getElementById("banner").textContent =
+      "Practice map. These places are fake and are not at the latitude and longitude above.";
+  } catch (error) {
+    document.getElementById("banner").textContent = error.message || "The practice map failed.";
   }
 }
 
 async function loadLive(event) {
   event.preventDefault();
-  if (busy) return;
   stopPlay();
-  busy = true;
-  setDisabled(true);
+  const lat = document.getElementById("lat").value.trim();
+  const lon = document.getElementById("lon").value.trim();
+  const radius = document.getElementById("radius").value.trim();
+  const keyword = document.getElementById("keyword").value.trim();
   document.getElementById("banner").textContent =
-    "Calling Google Maps. Each full page can take a few minutes. Leave this tab open.";
+    "Starting a Google Maps search for " + keyword + " within " + radius +
+    " km of latitude " + lat + ", longitude " + lon + ". Leave this tab open.";
   try {
     const response = await fetch("/api/live", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        lat: Number(document.getElementById("lat").value),
-        lon: Number(document.getElementById("lon").value),
-        radius_km: Number(document.getElementById("radius").value),
-        keyword: document.getElementById("keyword").value,
+        lat: Number(lat),
+        lon: Number(lon),
+        radius_km: Number(radius),
+        keyword: keyword,
         max_searches: Number(document.getElementById("live-limit").value)
       })
     });
-    show(await readJson(response));
-    document.getElementById("banner").textContent = "";
+    const data = await response.json();
+    if (!response.ok) {
+      document.getElementById("banner").textContent = data.error || "The request failed";
+      if (response.status === 409) refreshStatus();
+      return;
+    }
+    applyStatus(data);
   } catch (error) {
     document.getElementById("banner").textContent = error.message || "Search failed";
-  } finally {
-    busy = false;
-    setDisabled(false);
   }
 }
 
-document.getElementById("demo").addEventListener("click", loadDemo);
-document.getElementById("demo-budget").addEventListener("click", () => {
-  document.getElementById("demo-limit").value = "1";
-  loadDemo();
-});
+document.getElementById("demo").addEventListener("click", () => { loadDemo(30); });
+document.getElementById("demo-budget").addEventListener("click", () => { loadDemo(1); });
 document.getElementById("live-form").addEventListener("submit", loadLive);
 document.getElementById("depth").addEventListener("input", () => {
   stopPlay();
@@ -555,7 +613,7 @@ document.getElementById("depth").addEventListener("input", () => {
   render();
 });
 document.getElementById("play").addEventListener("click", () => {
-  if (!report || busy) return;
+  if (!report || pollTimer) return;
   if (timer) {
     stopPlay();
     return;
@@ -577,7 +635,7 @@ document.getElementById("play").addEventListener("click", () => {
     if (cutoff >= max) stopPlay();
   }, 900);
 });
-loadDemo();
+refreshStatus();
 </script>
 </body>
 </html>
@@ -645,7 +703,93 @@ def _bounded_int(data: dict[str, object], key: str, default: int, *, low: int, h
     return value
 
 
-def live_view(raw: bytes) -> SessionView:
+class _Job:
+    def __init__(self) -> None:
+        self.guard = threading.Lock()
+        self.state = "idle"
+        self.kind = ""
+        self.summary = ""
+        self.message = ""
+        self.error = ""
+        self.result: dict[str, object] | None = None
+        self.thread: threading.Thread | None = None
+
+
+_job = _Job()
+
+
+def job_snapshot() -> dict[str, object]:
+    with _job.guard:
+        payload: dict[str, object] = {
+            "state": _job.state,
+            "kind": _job.kind,
+            "summary": _job.summary,
+            "message": _job.message,
+        }
+        if _job.error:
+            payload["error"] = _job.error
+        if _job.result is not None:
+            payload["result"] = _job.result
+        return payload
+
+
+def begin_job(
+    kind: str,
+    summary: str,
+    work: Callable[[Callable[[str], None]], SessionView],
+) -> dict[str, object]:
+    """Start one search, or return the search that is already running."""
+    with _job.guard:
+        if _job.state == "running":
+            message = _job.message
+            if not message.startswith("This search is already running."):
+                message = "This search is already running. " + message
+            return {
+                "state": "running",
+                "kind": _job.kind,
+                "summary": _job.summary,
+                "message": message,
+            }
+        _job.state = "running"
+        _job.kind = kind
+        _job.summary = summary
+        _job.message = "Starting."
+        _job.error = ""
+        _job.result = None
+
+        def run() -> None:
+            def progress(text: str) -> None:
+                with _job.guard:
+                    if _job.state == "running":
+                        _job.message = text
+
+            try:
+                view = work(progress)
+            except Exception as exc:  # noqa: BLE001
+                message = redact(str(exc))[:300] or "The search failed."
+                with _job.guard:
+                    _job.state = "error"
+                    _job.error = message
+                    _job.message = message
+                return
+            with _job.guard:
+                _job.state = "done"
+                _job.result = view_payload(view)
+                _job.message = "Finished."
+
+        thread = threading.Thread(target=run, daemon=True)
+        _job.thread = thread
+        thread.start()
+    return job_snapshot()
+
+
+def wait_job(timeout: float = 5) -> None:
+    thread = _job.thread
+    if thread is not None:
+        thread.join(timeout)
+
+
+def prepare_live(raw: bytes) -> tuple[str, Callable[[Callable[[str], None]], SessionView]]:
     if len(raw) > 65_536:
         raise ValueError("request is too large")
     try:
@@ -674,20 +818,29 @@ def live_view(raw: bytes) -> SessionView:
             raise ValueError("min_cell_m must be from 50 to 5000")
     region = circle_region(lat, lon, radius_km)
     area = f"circle of {radius_km} km around latitude {lat}, longitude {lon}"
-    return run_live(
-        region,
-        keyword=keyword,
-        max_searches=limit,
-        min_cell_m=cell_m,
-        depth=20,
-        timeout_s=1200.0,
-        image=_LIVE_IMAGE,
-        binary="",
-        proxies_file=None,
-        lang="en",
-        exit_on_inactivity="",
-        area_label=area,
+    summary = (
+        f"Google Maps search for {keyword!r} within {radius_km} km "
+        f"of latitude {lat}, longitude {lon}."
     )
+
+    def work(progress: Callable[[str], None]) -> SessionView:
+        return run_live(
+            region,
+            keyword=keyword,
+            max_searches=limit,
+            min_cell_m=cell_m,
+            depth=20,
+            timeout_s=1200.0,
+            image=_LIVE_IMAGE,
+            binary="",
+            proxies_file=None,
+            lang="en",
+            exit_on_inactivity="",
+            area_label=area,
+            progress=progress,
+        )
+
+    return summary, work
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -698,8 +851,22 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/":
             self._send(200, "text/html; charset=utf-8", PAGE_HTML.encode("utf-8"))
             return
+        if parsed.path == "/api/status":
+            self._json(200, job_snapshot())
+            return
         if parsed.path == "/api/demo":
-            self._run(lambda: demo_view(parsed.query))
+            if job_snapshot()["state"] == "running":
+                self._json(
+                    409,
+                    {
+                        "error": (
+                            "A Google Maps search is still running. "
+                            "The practice map waits until it finishes. Leave this tab open."
+                        )
+                    },
+                )
+                return
+            self._finish(lambda: demo_view(parsed.query))
             return
         self._json(404, {"error": "Not found"})
 
@@ -717,19 +884,19 @@ class Handler(BaseHTTPRequestHandler):
             self._json(400, {"error": "request is too large"})
             return
         raw = self.rfile.read(length)
-        self._run(lambda: live_view(raw))
-
-    def _run(self, build: Callable[[], SessionView]) -> None:
-        if not _RUN_LOCK.acquire(blocking=False):
-            self._json(409, {"error": "A search is already running."})
+        try:
+            summary, work = prepare_live(raw)
+        except (ValueError, TypeError) as exc:
+            self._json(400, {"error": str(exc)})
             return
+        self._json(200, begin_job("live", summary, work))
+
+    def _finish(self, build: Callable[[], SessionView]) -> None:
         try:
             payload = view_payload(build())
         except (ValueError, TypeError) as exc:
             self._json(400, {"error": str(exc)})
             return
-        finally:
-            _RUN_LOCK.release()
         self._json(200, payload)
 
     def _json(self, status: int, payload: dict[str, object]) -> None:
