@@ -440,6 +440,7 @@ class GosomSearch:
         projection: LocalProjection,
         fetcher: GosomFetcher,
         probe_zoom_delta: int = 1,
+        on_event: Callable[[str], None] | None = None,
     ) -> None:
         if probe_zoom_delta < 0 or probe_zoom_delta > 5:
             raise ValueError("probe_zoom_delta must be from 0 to 5")
@@ -448,6 +449,7 @@ class GosomSearch:
         self.cap = MAPS_VIEW_CAP
         self.fetcher = fetcher
         self._probe_zoom_delta = probe_zoom_delta
+        self._on_event = on_event or (lambda _text: None)
         self._cache: dict[tuple[str, str, int], list[Place]] = {}
         self.fetches: list[FetchRecord] = []
 
@@ -472,7 +474,14 @@ class GosomSearch:
                     rows=len(cached),
                 )
             )
+            self._on_event(
+                f"Reused cached view lat={view.lat:.6f} lon={view.lon:.6f} "
+                f"zoom={view.zoom} ({len(cached)} rows)."
+            )
             return list(cached)
+        self._on_event(
+            f"Fetching view lat={view.lat:.6f} lon={view.lon:.6f} zoom={view.zoom}."
+        )
         started = time.monotonic()
         try:
             payload = self.fetcher.fetch(keyword=self.keyword, view=view)
@@ -480,7 +489,9 @@ class GosomSearch:
             raise
         except Exception as exc:
             raise ProviderError("gosom view failed") from exc
+        self._on_event(f"Parsing {len(payload)} bytes of results.")
         places = parse_gosom_places(payload)
+        elapsed = time.monotonic() - started
         self._cache[key] = places
         self.fetches.append(
             FetchRecord(
@@ -488,10 +499,11 @@ class GosomSearch:
                 lon=view.lon,
                 zoom=view.zoom,
                 cached=False,
-                seconds=time.monotonic() - started,
+                seconds=elapsed,
                 rows=len(places),
             )
         )
+        self._on_event(f"Fetched {len(places)} rows in {elapsed:.0f}s.")
         return list(places)
 
 
@@ -510,6 +522,7 @@ class WorkspaceRunner:
         exit_on_inactivity: str | None = None,
         proxies_file: Path | None = None,
         fetch_budget: int | None = None,
+        on_event: Callable[[str], None] | None = None,
     ) -> None:
         if mode not in {"binary", "docker"}:
             raise ValueError("mode must be 'binary' or 'docker'")
@@ -526,6 +539,7 @@ class WorkspaceRunner:
         self.exit_on_inactivity = validate_inactivity(exit_on_inactivity)
         self.proxies_file = proxies_file
         self.fetch_budget = fetch_budget
+        self._on_event = on_event or (lambda _text: None)
         self.started = 0
         if proxies_file is not None and not proxies_file.is_file():
             raise ValueError("proxies file is missing")
@@ -554,6 +568,7 @@ class WorkspaceRunner:
                     proxies_file=str(self.proxies_file) if self.proxies_file else None,
                 )
                 command: list[str] = [*self.binary, *scraper_args]
+                how = "binary"
             else:
                 container_name = f"geocoverage-gosom-{uuid.uuid4().hex[:12]}"
                 proxies_in_container = (
@@ -575,11 +590,21 @@ class WorkspaceRunner:
                     proxies_host=self.proxies_file,
                     scraper_args=scraper_args,
                 )
+                how = "docker"
 
                 def on_timeout(name: str = container_name) -> str:
                     return docker_kill(name)
 
+            self._on_event(
+                f"Starting {how} browser for lat={view.lat:.6f} lon={view.lon:.6f} "
+                f"zoom={view.zoom} depth={self.depth}."
+            )
+            started = time.monotonic()
             run_command(command, timeout_s=self.timeout_s, on_timeout=on_timeout)
+            browser_s = time.monotonic() - started
+            self._on_event(f"Browser finished in {browser_s:.0f}s.")
             if not results_path.is_file():
                 raise ProviderError("gosom exited without a results file")
-            return results_path.read_text(encoding="utf-8")
+            payload = results_path.read_text(encoding="utf-8")
+            self._on_event(f"Results file is {len(payload)} bytes.")
+            return payload

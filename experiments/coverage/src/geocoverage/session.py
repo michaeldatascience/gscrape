@@ -264,7 +264,7 @@ def run_demo(*, max_searches: int, min_cell_m: float) -> SessionView:
 
 
 class _ReportingSearch:
-    """Count map pages so the viewer can say which page is open."""
+    """Number planner views so the log can say which page is in progress."""
 
     def __init__(self, inner: SearchAdapter, progress: Callable[[str], None]) -> None:
         self._inner = inner
@@ -281,9 +281,9 @@ class _ReportingSearch:
     ) -> list[Place]:
         self._pages += 1
         page = self._pages
-        self._progress(f"Opening map page {page}. A full page can take a few minutes.")
+        self._progress(f"Map page {page} ({variant}).")
         places = self._inner.search(geometry_m, variant=variant)
-        self._progress(f"Map page {page} returned {len(places)} rows.")
+        self._progress(f"Map page {page} kept {len(places)} rows for the planner.")
         return places
 
 
@@ -303,6 +303,7 @@ def run_live(
     area_label: str = "",
     progress: Callable[[str], None] | None = None,
 ) -> SessionView:
+    note = progress or (lambda _text: None)
     runner = WorkspaceRunner(
         mode="binary" if binary else "docker",
         binary=tuple(binary.split()) if binary else (),
@@ -313,9 +314,15 @@ def run_live(
         exit_on_inactivity=exit_on_inactivity or None,
         proxies_file=proxies_file,
         fetch_budget=max_searches + 1,
+        on_event=note,
     )
     projection = local_projection(region)
-    gosom = GosomSearch(keyword=keyword, projection=projection, fetcher=runner)
+    gosom = GosomSearch(
+        keyword=keyword,
+        projection=projection,
+        fetcher=runner,
+        on_event=note,
+    )
     search: SearchAdapter = gosom
     if progress is not None:
         search = _ReportingSearch(gosom, progress)
@@ -333,7 +340,7 @@ def run_live(
         heading=heading,
         mode="live",
         keyword=keyword,
-        cap=search.cap,
+        cap=gosom.cap,
         max_searches=max_searches,
         min_cell_m=min_cell_m,
         region=region,

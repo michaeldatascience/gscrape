@@ -162,8 +162,8 @@ footer { max-width: 1120px; margin: 0 auto; padding: 0.8rem 1.2rem 2rem; color: 
       <span class="hint">Words to type into Maps, such as restaurant.</span>
     </label>
     <label>Max searches
-      <input id="live-limit" type="number" min="1" max="12" value="5"/>
-      <span class="hint">How many extra pages after the first. Each can take minutes.</span>
+      <input id="live-limit" type="number" min="1" max="12" value="3"/>
+      <span class="hint">Planner cell budget. Use 2 or 3 for a short test. Each real browser page can take a few minutes.</span>
     </label>
     <button type="submit" id="search">Search this area</button>
     <p class="warn">Search this area calls Google Maps. Leave this tab open. Refreshing does not start a second search; it shows the one already running. The total number of places stays unknown.</p>
@@ -185,6 +185,7 @@ footer { max-width: 1120px; margin: 0 auto; padding: 0.8rem 1.2rem 2rem; color: 
     <div class="stat">Status<b id="run-status"></b></div>
   </section>
   <p id="rule" class="note"></p>
+  <p id="meaning" class="note" hidden></p>
   <ul class="legend">
     <li><i class="split"></i>Quartered</li>
     <li><i class="stop"></i>Stopped, page was short</li>
@@ -274,6 +275,13 @@ function show(data) {
     "A page is quartered when it returns at least " + data.split_at +
     " of " + data.cap + " rows. A shorter page stops. The search limit here is " +
     data.max_searches + ".";
+  const meaning = document.getElementById("meaning");
+  meaning.hidden = false;
+  meaning.textContent =
+    "Each piece is its own Maps page of at most " + data.cap +
+    " rows. SW, SE, NW, and NE are separate views of the same area, so their row counts can overlap. " +
+    "The boxes above count unique place IDs inside the circle only. " +
+    data.only_planner + " of those IDs were missing from the first whole-area page.";
   render();
 }
 
@@ -518,7 +526,7 @@ function stopPoll() {
 
 function schedulePoll() {
   if (pollTimer) return;
-  pollTimer = setInterval(() => { refreshStatus(); }, 2000);
+  pollTimer = setInterval(() => { refreshStatus(); }, 5000);
 }
 
 function applyStatus(data) {
@@ -837,7 +845,7 @@ def prepare_live(raw: bytes) -> tuple[str, Callable[[Callable[[str], None]], Ses
     if not isinstance(keyword, str):
         raise TypeError("keyword must be a search phrase")
     keyword = validate_keyword(keyword)
-    limit = _bounded_int(data, "max_searches", 5, low=1, high=12)
+    limit = _bounded_int(data, "max_searches", 3, low=1, high=12)
     cell_m = 200.0
     if "min_cell_m" in data and data["min_cell_m"] is not None:
         cell_m = _required_float(data, "min_cell_m")

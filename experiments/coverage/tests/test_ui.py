@@ -152,7 +152,7 @@ def test_running_search_is_shown_instead_of_an_error(
 
     def work(progress: object) -> SessionView:
         assert callable(progress)
-        progress("Opening map page 1.")
+        progress("Fetching view lat=19.016400 lon=73.037300 zoom=15.")
         started.set()
         release.wait(5)
         return run_demo(max_searches=1, min_cell_m=200)
@@ -165,8 +165,8 @@ def test_running_search_is_shown_instead_of_an_error(
         begin_job("live", summary, work)
         assert started.wait(2)
         err = capsys.readouterr().err
-        assert "Opening map page 1." in err
-        assert "Opening map page 1." in log_path.read_text(encoding="utf-8")
+        assert "Fetching view" in err
+        assert "Fetching view" in log_path.read_text(encoding="utf-8")
         with urlopen(viewer_url + "/api/status", timeout=2) as response:
             body = json.loads(response.read().decode("utf-8"))
         assert body["state"] == "running"
