@@ -13,7 +13,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from shapely.geometry import Polygon
+from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
 from geocoverage.compare import SearchComparison, compare_searches
@@ -275,6 +275,7 @@ def run_live(
     proxies_file: Path | None,
     lang: str,
     exit_on_inactivity: str,
+    area_label: str = "",
 ) -> SessionView:
     runner = WorkspaceRunner(
         mode="binary" if binary else "docker",
@@ -296,8 +297,11 @@ def run_live(
         min_cell_m=min_cell_m,
         probe_fraction=0,
     )
+    heading = f"Live Google Maps search for {keyword!r}."
+    if area_label:
+        heading = f"{heading} Area: {area_label}."
     return _view_from_comparison(
-        heading=f"Live Google Maps search for {keyword!r}.",
+        heading=heading,
         mode="live",
         keyword=keyword,
         cap=search.cap,
@@ -306,6 +310,65 @@ def run_live(
         region=region,
         comparison=comparison,
     )
+
+
+def view_payload(view: SessionView) -> dict[str, object]:
+    """JSON for the local viewer. Place rows are id, label, and coordinates."""
+    polygons: list[Polygon] = []
+    if isinstance(view.region, Polygon):
+        polygons = [view.region]
+    elif isinstance(view.region, MultiPolygon):
+        polygons = list(view.region.geoms)
+    rings = [
+        [[float(lon), float(lat)] for lon, lat in polygon.exterior.coords]
+        for polygon in polygons
+    ]
+    cells: list[dict[str, object]] = []
+    for cell in view.cells:
+        places: list[dict[str, object]] = [
+            {
+                "place_id": place.place_id,
+                "label": place.label,
+                "lat": place.lat,
+                "lon": place.lon,
+                "rank": place.rank,
+            }
+            for place in cell.places
+        ]
+        cells.append(
+            {
+                "path": cell.path,
+                "name": piece_name(cell.path),
+                "depth": cell.depth,
+                "decision": cell.decision,
+                "detail": cell.detail,
+                "rows": cell.rows,
+                "in_polygon": cell.in_polygon,
+                "outside": cell.outside,
+                "new_ids": cell.new_ids,
+                "west": cell.west,
+                "south": cell.south,
+                "east": cell.east,
+                "north": cell.north,
+                "places": places,
+            }
+        )
+    return {
+        "heading": view.heading,
+        "mode": view.mode,
+        "keyword": view.keyword,
+        "single_search_in_polygon": view.single_search_in_polygon,
+        "planner_in_polygon": view.planner_in_polygon,
+        "only_planner": view.only_planner,
+        "status": view.status,
+        "claim": view.claim,
+        "cap": view.cap,
+        "split_at": round(SATURATION_FRACTION * view.cap),
+        "max_searches": view.max_searches,
+        "min_cell_m": view.min_cell_m,
+        "rings": rings,
+        "cells": cells,
+    }
 
 
 def write_session(view: SessionView, html_path: Path) -> None:
@@ -317,7 +380,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Watch a point-and-radius search split into smaller map views. "
-            "Use --demo to try the splitter with no Google calls."
+            "Use --demo to try the splitter with no Google calls. "
+            "For the map in a browser, run python -m geocoverage.ui."
         )
     )
     parser.add_argument("--demo", action="store_true", help="Fake 500-place square. No Google calls.")
@@ -388,21 +452,7 @@ def main(argv: list[str] | None = None) -> int:
             proxies_file=args.proxies_file,
             lang=args.lang,
             exit_on_inactivity=args.exit_on_inactivity,
-        )
-        view = SessionView(
-            heading=f"{view.heading} Area: {heading_bits}.",
-            mode=view.mode,
-            keyword=view.keyword,
-            single_search_in_polygon=view.single_search_in_polygon,
-            planner_in_polygon=view.planner_in_polygon,
-            only_planner=view.only_planner,
-            status=view.status,
-            claim=view.claim,
-            cap=view.cap,
-            max_searches=view.max_searches,
-            min_cell_m=view.min_cell_m,
-            cells=view.cells,
-            region=view.region,
+            area_label=heading_bits,
         )
     text = render_text(view)
     sys.stdout.write(text)
