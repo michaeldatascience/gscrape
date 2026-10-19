@@ -39,8 +39,13 @@ MAP_VIEWPORT_PX = 800
 # One Google Maps results list is about 120 places. Saturation uses this cap.
 MAPS_VIEW_CAP = 120
 
-# gosom's own docs treat depth 10 as a deep scroll. Higher values are refused.
-MAX_DEPTH = 10
+# Depth 10 stopped at 75 rows on a zoom 14 and a zoom 15 view, under the
+# split line. A depth 20 scroll on the same zoom 15 view reached 117 rows,
+# which is the maps slice this planner is measuring. gosom also cancels a
+# scroll that is still running at its 60s stats tick when exit-on-inactivity
+# is set, because the first job has not completed yet. The process timeout is
+# the guardrail instead.
+MAX_DEPTH = 20
 
 FORBIDDEN_FLAGS = frozenset(
     {
@@ -119,7 +124,9 @@ def validate_depth(depth: int) -> int:
     return depth
 
 
-def validate_inactivity(value: str) -> str:
+def validate_inactivity(value: str | None) -> str | None:
+    if value is None or value == "":
+        return None
     if not _DURATION_RE.fullmatch(value):
         raise ValueError("exit-on-inactivity must look like '3m'")
     return value
@@ -193,13 +200,13 @@ def one_view_args(
     view: MapView,
     depth: int,
     lang: str,
-    exit_on_inactivity: str,
+    exit_on_inactivity: str | None,
     proxies_file: str | None,
 ) -> list[str]:
     """Arguments for one gosom process. Grid and fast mode are absent."""
     depth = validate_depth(depth)
     lang = validate_lang(lang)
-    exit_on_inactivity = validate_inactivity(exit_on_inactivity)
+    inactivity = validate_inactivity(exit_on_inactivity)
     args = [
         "-input",
         input_path,
@@ -216,9 +223,9 @@ def one_view_args(
         view.geo,
         "-zoom",
         str(view.zoom),
-        "-exit-on-inactivity",
-        exit_on_inactivity,
     ]
+    if inactivity is not None:
+        args.extend(["-exit-on-inactivity", inactivity])
     if proxies_file is not None:
         args.extend(["-proxies-file", proxies_file])
     assert_one_view(args)
@@ -498,7 +505,7 @@ class WorkspaceRunner:
         depth: int = MAX_DEPTH,
         lang: str = "en",
         timeout_s: float = 1200,
-        exit_on_inactivity: str = "3m",
+        exit_on_inactivity: str | None = None,
         proxies_file: Path | None = None,
         fetch_budget: int | None = None,
     ) -> None:

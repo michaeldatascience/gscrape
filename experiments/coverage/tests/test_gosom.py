@@ -107,14 +107,26 @@ def test_one_view_args_put_latitude_first_and_omit_grid_and_fast_mode() -> None:
         assert flag not in args
     with pytest.raises(ValueError, match="forbidden"):
         assert_one_view([*args, "-fast-mode"])
+    assert "-exit-on-inactivity" in args
+    quiet = one_view_args(
+        input_path="/work/query.txt",
+        results_path="/work/results.json",
+        view=view,
+        depth=20,
+        lang="en",
+        exit_on_inactivity=None,
+        proxies_file=None,
+    )
+    assert "-exit-on-inactivity" not in quiet
+    assert_one_view(quiet)
     with pytest.raises(ValueError, match="depth"):
         one_view_args(
             input_path="q",
             results_path="r",
             view=view,
-            depth=11,
+            depth=21,
             lang="en",
-            exit_on_inactivity="3m",
+            exit_on_inactivity=None,
             proxies_file=None,
         )
 

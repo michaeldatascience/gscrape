@@ -177,13 +177,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--polygon", type=Path, default=DEFAULT_POLYGON)
     parser.add_argument("--max-searches", type=int, default=5)
     parser.add_argument("--min-cell-m", type=float, default=200.0)
-    parser.add_argument("--depth", type=int, default=10)
+    parser.add_argument("--depth", type=int, default=20)
     parser.add_argument("--timeout-seconds", type=float, default=1200.0)
     parser.add_argument("--image", default=DEFAULT_IMAGE)
     parser.add_argument("--binary", default="")
     parser.add_argument("--proxies-file", type=Path)
     parser.add_argument("--lang", default="en")
-    parser.add_argument("--exit-on-inactivity", default="3m")
+    parser.add_argument(
+        "--exit-on-inactivity",
+        default="",
+        help="Optional gosom inactivity duration, such as 3m. Empty leaves it off.",
+    )
     parser.add_argument("--probe-fraction", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
