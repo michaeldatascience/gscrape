@@ -82,3 +82,34 @@ def test_failed_repeat_is_recorded_not_invented() -> None:
     assert [run.error for run in runs] == ["", "map page failed", ""]
     assert local_projection(region) is not None
     assert box(0, 0, 1, 1).area == 1.0
+
+
+def test_empty_cell_has_no_overlap_evidence_and_reanalyse_roundtrips() -> None:
+    region = circle_region(19.0635, 72.9986, 0.75)
+
+    def fetch(spec: object, repeat: int) -> tuple[MapView, float, list[Place]]:
+        del spec, repeat
+        return MapView(lat=19.0635, lon=72.9986, zoom=17), 1.0, []
+
+    payload = run_experiment(
+        region,
+        area_label="test",
+        keyword="restaurant",
+        repeats=2,
+        fetch=fetch,
+    )
+    cells = payload["cells"]
+    assert isinstance(cells, list)
+    for report in cells:
+        assert isinstance(report, dict)
+        assert report["mean_pairwise_jaccard"] is None
+        assert report["core_fraction_of_union"] is None
+    summary = payload["summary"]
+    assert isinstance(summary, dict)
+    assert summary["mean_pairwise_jaccard"] is None
+    assert summary["cells_with_overlap_evidence"] == 0
+
+    from geocoverage.repeatability import reanalyse_payload
+
+    rebuilt = reanalyse_payload(payload, region)
+    assert rebuilt["summary"] == payload["summary"]

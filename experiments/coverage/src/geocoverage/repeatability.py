@@ -49,6 +49,7 @@ VASHI_LON = 72.9986
 DEFAULT_RADIUS_KM = 0.75
 DEFAULT_REPEATS = 4
 MAX_REPEATS = 6
+FAR_OUTSIDE_M = 5_000.0
 CELL_NAMES = ("SW", "SE", "NW", "NE")
 DEFAULT_OUT = Path(__file__).resolve().parents[2] / ".runs" / "vashi-repeat.json"
 
@@ -148,21 +149,32 @@ def analyse_cell(cell_runs: _CellRuns, projection: LocalProjection) -> dict[str,
     for run, places, ids in zip(ok_runs, in_target, sets, strict=True):
         new_ids = ids - seen
         seen |= ids
+        far_outside = sum(
+            1
+            for place in run.places
+            if cell_runs.spec.target_m.distance(
+                projection.point_meters(place.lon, place.lat)
+            )
+            > FAR_OUTSIDE_M
+        )
         per_repeat.append(
             {
                 "repeat": run.repeat,
                 "seconds": round(run.seconds, 2),
                 "raw_rows": len(run.places),
                 "in_target": len(places),
+                "far_outside_rows": far_outside,
                 "new_in_target": len(new_ids),
                 "cumulative_in_target": len(seen),
             }
         )
 
+    # Two empty sets have no overlap evidence; they are not a perfect match.
     pairwise: list[float] = []
-    for i in range(len(sets)):
-        for j in range(i + 1, len(sets)):
-            pairwise.append(_jaccard(sets[i], sets[j]))
+    if union:
+        for i in range(len(sets)):
+            for j in range(i + 1, len(sets)):
+                pairwise.append(_jaccard(sets[i], sets[j]))
 
     rank_diffs: list[float] = []
     if len(ok_runs) > 1 and core:
@@ -191,11 +203,11 @@ def analyse_cell(cell_runs: _CellRuns, projection: LocalProjection) -> dict[str,
         "per_repeat": per_repeat,
         "union_in_target": len(union),
         "core_in_target": len(core),
-        "core_fraction_of_union": round(len(core) / len(union), 4) if union else 1.0,
+        "core_fraction_of_union": round(len(core) / len(union), 4) if union else None,
         "best_single_in_target": best_single,
         "extra_ids_from_repeats": len(union) - best_single,
-        "mean_pairwise_jaccard": round(sum(pairwise) / len(pairwise), 4) if pairwise else 1.0,
-        "min_pairwise_jaccard": round(min(pairwise), 4) if pairwise else 1.0,
+        "mean_pairwise_jaccard": round(sum(pairwise) / len(pairwise), 4) if pairwise else None,
+        "min_pairwise_jaccard": round(min(pairwise), 4) if pairwise else None,
         "mean_abs_rank_shift_core": (
             round(sum(rank_diffs) / len(rank_diffs), 2) if rank_diffs else 0.0
         ),
@@ -294,28 +306,104 @@ def run_experiment(
 
     collected = collect_runs(cells, projection=projection, repeats=repeats, fetch=tracked_fetch)
     cell_reports = [analyse_cell(cell_runs, projection) for cell_runs in collected]
-    jaccards = [_float_value(report["mean_pairwise_jaccard"]) for report in cell_reports]
-    total_union = sum(_int_value(report["union_in_target"]) for report in cell_reports)
-    total_best = sum(_int_value(report["best_single_in_target"]) for report in cell_reports)
-    total_extra = sum(_int_value(report["extra_ids_from_repeats"]) for report in cell_reports)
     return {
         "experiment": "exp1-repeatability",
         "area": area_label,
         "keyword": keyword,
         "repeats_planned": repeats,
         "cells": cell_reports,
-        "summary": {
-            "mean_pairwise_jaccard": (
-                round(sum(jaccards) / len(jaccards), 4) if jaccards else 1.0
-            ),
-            "union_in_target_all_cells": total_union,
-            "best_single_sum_all_cells": total_best,
-            "extra_ids_from_repeats_all_cells": total_extra,
-        },
-        "claim": (
-            "Repeatability evidence only. The union of repeats is a larger "
-            "observed set, not every place in the area. Total places unknown."
+        "summary": _summarise(cell_reports),
+        "claim": CLAIM,
+    }
+
+
+CLAIM = (
+    "Repeatability evidence only. The union of repeats is a larger "
+    "observed set, not every place in the area. Total places unknown."
+)
+
+
+def _summarise(cell_reports: list[dict[str, object]]) -> dict[str, object]:
+    jaccards = [
+        _float_value(report["mean_pairwise_jaccard"])
+        for report in cell_reports
+        if report["mean_pairwise_jaccard"] is not None
+    ]
+    return {
+        "mean_pairwise_jaccard": (
+            round(sum(jaccards) / len(jaccards), 4) if jaccards else None
         ),
+        "cells_with_overlap_evidence": len(jaccards),
+        "union_in_target_all_cells": sum(
+            _int_value(report["union_in_target"]) for report in cell_reports
+        ),
+        "best_single_sum_all_cells": sum(
+            _int_value(report["best_single_in_target"]) for report in cell_reports
+        ),
+        "extra_ids_from_repeats_all_cells": sum(
+            _int_value(report["extra_ids_from_repeats"]) for report in cell_reports
+        ),
+    }
+
+
+def reanalyse_payload(stored: dict[str, object], region: BaseGeometry) -> dict[str, object]:
+    """Rebuild the analysis from stored runs. No search is called."""
+    projection, cells = build_cells(region)
+    specs = {spec.name: spec for spec in cells}
+    stored_cells = stored.get("cells")
+    if not isinstance(stored_cells, list):
+        raise TypeError("stored payload has no cells list")
+    collected: list[_CellRuns] = []
+    for report in stored_cells:
+        if not isinstance(report, dict):
+            raise TypeError("stored cell report is malformed")
+        name = report.get("cell")
+        if not isinstance(name, str) or name not in specs:
+            raise ValueError("stored cell report has an unknown cell")
+        cell_runs = _CellRuns(spec=specs[name])
+        runs = report.get("runs")
+        if not isinstance(runs, list):
+            raise TypeError("stored cell report has no runs list")
+        for run in runs:
+            if not isinstance(run, dict):
+                raise TypeError("stored run is malformed")
+            places: list[Place] = []
+            raw_places = run.get("places")
+            if not isinstance(raw_places, list):
+                raise TypeError("stored run has no places list")
+            for raw in raw_places:
+                if not isinstance(raw, dict):
+                    raise TypeError("stored place is malformed")
+                places.append(
+                    Place(
+                        place_id=str(raw["place_id"]),
+                        lon=_float_value(raw["lon"]),
+                        lat=_float_value(raw["lat"]),
+                        rank=_int_value(raw["rank"]),
+                    )
+                )
+            cell_runs.runs.append(
+                RepeatRun(
+                    cell=name,
+                    repeat=_int_value(run["repeat"]),
+                    lat=_float_value(run["lat"]),
+                    lon=_float_value(run["lon"]),
+                    zoom=_int_value(run["zoom"]),
+                    seconds=_float_value(run["seconds"]),
+                    places=tuple(places),
+                    error=str(run.get("error") or ""),
+                )
+            )
+        collected.append(cell_runs)
+    cell_reports = [analyse_cell(cell_runs, projection) for cell_runs in collected]
+    return {
+        "experiment": "exp1-repeatability",
+        "area": str(stored.get("area") or ""),
+        "keyword": str(stored.get("keyword") or ""),
+        "repeats_planned": _int_value(stored.get("repeats_planned") or 0),
+        "cells": cell_reports,
+        "summary": _summarise(cell_reports),
+        "claim": CLAIM,
     }
 
 
@@ -348,7 +436,8 @@ def render_text(payload: dict[str, object]) -> str:
             lines.append(
                 f"  repeat {entry['repeat']}: raw {entry['raw_rows']}, "
                 f"in-target {entry['in_target']}, new {entry['new_in_target']}, "
-                f"cumulative {entry['cumulative_in_target']}, {entry['seconds']}s"
+                f"cumulative {entry['cumulative_in_target']}, "
+                f"far-outside {entry['far_outside_rows']}, {entry['seconds']}s"
             )
         if report["errors"]:
             lines.append(f"  failed repeats: {report['errors']}")
@@ -401,6 +490,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--lang", default="en")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument(
+        "--reanalyse",
+        type=Path,
+        help="Rebuild the report from a stored JSON payload. No Google calls.",
+    )
+    parser.add_argument(
         "--dry-plan",
         action="store_true",
         help="Print cells and views only. No Google calls.",
@@ -423,6 +517,16 @@ def main(argv: list[str] | None = None) -> int:
         f"latitude {args.lat}, longitude {args.lon})"
     )
     projection, cells = build_cells(region)
+    if args.reanalyse is not None:
+        stored = json.loads(args.reanalyse.read_text(encoding="utf-8"))
+        if not isinstance(stored, dict):
+            parser.error("stored payload is not a JSON object")
+        payload = reanalyse_payload(stored, region)
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        sys.stdout.write(render_text(payload))
+        print(f"Wrote {args.out.resolve()}", file=sys.stderr)
+        return 0
     if args.dry_plan:
         print(f"Dry plan for {area_label}. Keyword {keyword!r}. No Google calls.")
         for spec in cells:
