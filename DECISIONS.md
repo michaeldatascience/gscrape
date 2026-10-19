@@ -1,0 +1,50 @@
+# GeoDiscovery - Architectural Decision Records
+
+## ADR-001: Product moat is recursive discovery quality
+- **Status:** Accepted.
+- **Decision:** Build a source-independent geospatial coverage planner, quality evidence system and reliable provider adapters before generic lead-scoring or AI chat.
+- **Reason:** Returning >120 raw records is not equivalent to finding all matching places.
+
+## ADR-002: Python modular monolith, Go scraper out of process
+- **Status:** Accepted.
+- **Decision:** FastAPI + PostGIS + Celery backend and Next.js frontend; invoke gosom through a container adapter if benchmarked positively.
+- **Reason:** Fast iteration and strong GIS libraries without maintaining a second core domain model in Go.
+
+## ADR-003: Two distinct recursive collection paths
+- **Status:** Accepted.
+- **Decision:** Heuristic/adaptive provider sampling for UI-type scrapers, and opt-in count-guided recursive research for Google Aggregate API.
+- **Reason:** A result cap detector alone cannot establish recall; the official count path answers a different, narrower question.
+
+## ADR-004: Official Google APIs isolated by source policy
+- **Status:** Accepted.
+- **Decision:** Google Aggregate/Places data is research-only until permissions/retention/export use are reviewed; the platform must support source-specific retention.
+- **Reason:** Official content cannot automatically be cached indefinitely, combined or resold.
+
+## ADR-005: Prefer a mock provider before live scraping
+- **Status:** Accepted.
+- **Decision:** All planning and coverage logic must pass deterministic fixture tests before any external credentials are added.
+- **Reason:** Prevents cost surprises and makes algorithmic behavior measurable.
+
+## ADR-006: Single managed provider first
+- **Status:** Accepted.
+- **Decision:** First commercial adapter is Apify `compass/crawler-google-places`, not an unverified private Google endpoint or an obsolete actor.
+- **Reason:** Verified API and input schema, existing native geographic division and bounded vendor execution.
+
+## ADR-007: Quality reports do not promise 100% completeness
+- **Status:** Accepted.
+- **Decision:** Report exact discovered counts, unresolved cells and sample-based evidence; allow narrower official-filter completeness language only where justified.
+- **Reason:** Google ranking, geometry differences, category ambiguity and incomplete reference sources introduce uncertainty.
+
+## ADR-008: Prove the per-search cap splitter before the application shell
+- **Status:** Accepted.
+- **Decision:** The first code is `experiments/coverage`, an offline quadtree with a capped mock search. FastAPI, Next.js, and the rest of `BUILD_PLAN.md` wait. Apify is not the fetch step: its Maps actor already subdivides a region. The next live fetch, when Docker exists in WSL Ubuntu, is gosom used as one view per cell that this planner chooses.
+- **Reason:** The product risk is coverage past one map-search slice. Buying a finished Apify list does not test or own that splitter. A web stack cannot show whether the splitter found the places a single 120-row page dropped.
+
+## Open items requiring measured decisions
+
+- Geography/boundary reference provider and commercial use license for each target country.
+- Min/max runtime budgets and acceptable per-location density sampling.
+- Whether Overture data alone gives enough independent benchmark reference coverage in first target cities.
+- Apify versus gosom economics for 3 density classes, measured with real billing and qualified results.
+- Production licensing of Google's official API content for the planned downstream uses.
+- How to define confidence levels from observed sample recall without presenting unjustified numeric certainty.

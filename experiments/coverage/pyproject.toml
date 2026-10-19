@@ -1,0 +1,39 @@
+[project]
+name = "geocoverage"
+version = "0.1.0"
+description = "Offline experiment: recover places past a per-search result cap by recursive map splitting."
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2",
+    "pyproj>=3.7",
+    "shapely>=2.1",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+pretty = true
+
+[[tool.mypy.overrides]]
+module = ["shapely", "shapely.*"]
+ignore_missing_imports = true
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.uv]
+package = true

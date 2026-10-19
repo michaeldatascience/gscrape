@@ -1,0 +1,715 @@
+openapi: 3.1.0
+info:
+  title: GeoDiscovery API
+  version: 0.1.0
+  description: |
+    Initial public API design. Implement incrementally according to BUILD_PLAN.md.
+    Every job result and export is scoped to the authenticated tenant.
+servers:
+  - url: http://localhost:8000/api/v1
+security:
+  - ApiKeyAuth: []
+paths:
+  /healthz:
+    get:
+      tags: [System]
+      security: []
+      summary: Process liveness
+      responses:
+        '200':
+          description: Alive
+  /readyz:
+    get:
+      tags: [System]
+      security: []
+      summary: Required dependencies ready
+      responses:
+        '200':
+          description: Ready
+        '503':
+          description: Not ready
+  /geo/validate:
+    post:
+      tags: [Geography]
+      summary: Validate and normalize a geographic area
+      operationId: validateArea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeoAreaInput'
+      responses:
+        '200':
+          description: Geometry report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaValidation'
+        '422':
+          $ref: '#/components/responses/InvalidRequest'
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Find supported categories and aliases
+      operationId: listCategories
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: locale
+          schema:
+            type: string
+            default: en-US
+      responses:
+        '200':
+          description: Matching categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+  /providers/capabilities:
+    get:
+      tags: [Providers]
+      summary: Public capabilities of currently enabled providers
+      operationId: providerCapabilities
+      responses:
+        '200':
+          description: Capabilities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProviderCapabilities'
+  /jobs/estimate:
+    post:
+      tags: [Jobs]
+      summary: Estimate discovery resource usage and costs
+      operationId: estimateJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+      responses:
+        '200':
+          description: Budget estimate with assumptions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobEstimate'
+        '422':
+          $ref: '#/components/responses/InvalidRequest'
+  /jobs:
+    post:
+      tags: [Jobs]
+      summary: Create and start a discovery job
+      operationId: createJob
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+      responses:
+        '201':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '409':
+          description: Duplicate/conflicting idempotency key
+        '422':
+          $ref: '#/components/responses/InvalidRequest'
+    get:
+      tags: [Jobs]
+      summary: List tenant jobs
+      operationId: listJobs
+      parameters:
+        - in: query
+          name: cursor
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        '200':
+          description: Job listing
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+                  next_cursor:
+                    type: [string, 'null']
+  /jobs/{job_id}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [Jobs]
+      summary: Job state and counters
+      operationId: getJob
+      responses:
+        '200':
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          description: Not found or not accessible
+  /jobs/{job_id}/pause:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    post:
+      tags: [Jobs]
+      summary: Pause job scheduling without killing already-billed work
+      operationId: pauseJob
+      responses:
+        '202':
+          description: Pause requested
+  /jobs/{job_id}/resume:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    post:
+      tags: [Jobs]
+      summary: Resume a paused or partially completed job
+      operationId: resumeJob
+      responses:
+        '202':
+          description: Resume requested
+  /jobs/{job_id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    post:
+      tags: [Jobs]
+      summary: Cancel remaining scheduled tasks and eligible external runs
+      operationId: cancelJob
+      responses:
+        '202':
+          description: Cancellation requested
+  /jobs/{job_id}/cells:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [Jobs]
+      summary: GeoJSON cell overlay with observed coverage states
+      operationId: getJobCells
+      parameters:
+        - in: query
+          name: bbox
+          description: Optional west,south,east,north for viewport subset
+          schema:
+            type: string
+      responses:
+        '200':
+          description: GeoJSON FeatureCollection
+          content:
+            application/geo+json:
+              schema:
+                type: object
+                additionalProperties: true
+  /jobs/{job_id}/quality:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [Jobs]
+      summary: Coverage evidence and unresolved areas
+      operationId: getJobQuality
+      responses:
+        '200':
+          description: Quality report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityReport'
+  /jobs/{job_id}/places:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [Places]
+      summary: List discovered place records matching filters
+      operationId: listJobPlaces
+      parameters:
+        - in: query
+          name: cursor
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: in_territory_only
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Cursor-paginated place rows
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Place'
+                  next_cursor:
+                    type: [string, 'null']
+  /exports:
+    post:
+      tags: [Exports]
+      summary: Request an async export, after source policy checks
+      operationId: createExport
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExportRequest'
+      responses:
+        '202':
+          description: Export queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Export'
+        '403':
+          description: Source policy forbids requested export
+  /exports/{export_id}:
+    parameters:
+      - in: path
+        name: export_id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Exports]
+      summary: Export status and manifest
+      operationId: getExport
+      responses:
+        '200':
+          description: Export status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Export'
+  /exports/{export_id}/download:
+    parameters:
+      - in: path
+        name: export_id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Exports]
+      summary: Obtain authorized time-limited download link
+      operationId: downloadExport
+      responses:
+        '200':
+          description: Short-lived signed URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, expires_at]
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                  expires_at:
+                    type: string
+                    format: date-time
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API-Key
+  parameters:
+    JobId:
+      in: path
+      name: job_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema:
+        type: string
+        maxLength: 128
+  responses:
+    InvalidRequest:
+      description: Invalid area/search fields, unsupported capability or budget policy
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    GeoAreaInput:
+      oneOf:
+        - type: object
+          required: [kind, geo_area_id]
+          properties:
+            kind:
+              const: geo_area_id
+            geo_area_id:
+              type: string
+              format: uuid
+        - type: object
+          required: [kind, geometry]
+          properties:
+            kind:
+              const: geojson
+            geometry:
+              type: object
+              description: GeoJSON Polygon or MultiPolygon in EPSG:4326
+              additionalProperties: true
+        - type: object
+          required: [kind, center, radius_m]
+          properties:
+            kind:
+              const: circle
+            center:
+              $ref: '#/components/schemas/LatLng'
+            radius_m:
+              type: number
+              exclusiveMinimum: 0
+        - type: object
+          required: [kind, bbox]
+          properties:
+            kind:
+              const: bbox
+            bbox:
+              type: array
+              minItems: 4
+              maxItems: 4
+              items:
+                type: number
+    LatLng:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+    AreaValidation:
+      type: object
+      required: [valid, area_m2, warnings]
+      properties:
+        valid:
+          type: boolean
+        area_m2:
+          type: number
+        normalized_geojson:
+          type: [object, 'null']
+          additionalProperties: true
+        warnings:
+          type: array
+          items:
+            type: string
+    Category:
+      type: object
+      required: [key, label]
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+    ProviderCapabilities:
+      type: object
+      required: [provider, supports_polygon, supports_native_grid, supports_count, supports_details]
+      properties:
+        provider:
+          type: string
+        supports_polygon:
+          type: boolean
+        supports_native_grid:
+          type: boolean
+        supports_count:
+          type: boolean
+        supports_details:
+          type: boolean
+        permitted_export:
+          type: boolean
+        notes:
+          type: array
+          items:
+            type: string
+    SearchSpec:
+      type: object
+      required: [keywords, categories]
+      properties:
+        keywords:
+          type: array
+          items:
+            type: string
+        categories:
+          type: array
+          items:
+            type: string
+        category_match:
+          type: string
+          enum: [primary_only, primary_or_secondary]
+          default: primary_or_secondary
+        locale:
+          type: string
+          default: en-US
+        status_filter:
+          type: array
+          items:
+            type: string
+            enum: [operational, temporarily_closed, permanently_closed, unknown]
+    CollectionSpec:
+      type: object
+      required: [provider, strategy, field_package]
+      properties:
+        provider:
+          type: string
+          enum: [mock, apify_compass, gosom, research_google_aggregate]
+        strategy:
+          type: string
+          enum: [native_then_audit, adaptive_audited, count_guided]
+        field_package:
+          type: string
+          enum: [basic, standard, extended]
+        max_search_depth:
+          type: integer
+          minimum: 0
+          maximum: 24
+          default: 12
+        allow_probe_searches:
+          type: boolean
+          default: true
+    Budget:
+      type: object
+      required: [currency, max_spend, max_provider_tasks]
+      properties:
+        currency:
+          type: string
+          enum: [USD]
+        max_spend:
+          type: number
+          minimum: 0
+        max_provider_tasks:
+          type: integer
+          minimum: 1
+    CreateJobRequest:
+      type: object
+      required: [name, area, search, collection, budget]
+      properties:
+        name:
+          type: string
+          maxLength: 160
+        area:
+          $ref: '#/components/schemas/GeoAreaInput'
+        search:
+          $ref: '#/components/schemas/SearchSpec'
+        collection:
+          $ref: '#/components/schemas/CollectionSpec'
+        budget:
+          $ref: '#/components/schemas/Budget'
+        output:
+          type: object
+          additionalProperties: true
+    JobEstimate:
+      type: object
+      required: [estimated_min_usd, estimated_max_usd, assumptions, warnings]
+      properties:
+        estimated_min_usd:
+          type: number
+          minimum: 0
+        estimated_max_usd:
+          type: number
+          minimum: 0
+        assumptions:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+    Job:
+      type: object
+      required: [id, name, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [draft, estimated, queued, planning, discovering, auditing, details, export_ready, completed, paused, cancel_requested, cancelled, partial, failed, budget_exhausted]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        summary:
+          type: object
+          additionalProperties: true
+    QualityReport:
+      type: object
+      required: [job_id, coverage_status, metrics, unresolved_reasons, claim]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        coverage_status:
+          type: string
+          enum: [count_verified_for_exact_filter, high_evidence, partial, unresolved, not_evaluated]
+        metrics:
+          type: object
+          additionalProperties:
+            type: [integer, number, string, boolean, 'null']
+        unresolved_reasons:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              cells:
+                type: integer
+        claim:
+          type: string
+    Place:
+      type: object
+      required: [id, source, source_id, observed_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+        source_id:
+          type: string
+        observed_at:
+          type: string
+          format: date-time
+        name:
+          type: [string, 'null']
+        address:
+          type: [string, 'null']
+        coordinates:
+          oneOf:
+            - $ref: '#/components/schemas/LatLng'
+            - type: 'null'
+        categories:
+          type: array
+          items:
+            type: string
+        phone:
+          type: [string, 'null']
+        website:
+          type: [string, 'null']
+          format: uri
+        in_territory:
+          type: boolean
+        category_match_status:
+          type: string
+          enum: [match, nonmatch, uncertain]
+        available_fields:
+          type: array
+          items:
+            type: string
+    CreateExportRequest:
+      type: object
+      required: [job_id, format]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        format:
+          type: string
+          enum: [csv, jsonl, xlsx, parquet]
+        columns:
+          type: array
+          items:
+            type: string
+        filters:
+          type: object
+          additionalProperties: true
+        include_coverage_manifest:
+          type: boolean
+          default: true
+    Export:
+      type: object
+      required: [id, job_id, status, format]
+      properties:
+        id:
+          type: string
+          format: uuid
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        format:
+          type: string
+          enum: [csv, jsonl, xlsx, parquet]
+        row_count:
+          type: [integer, 'null']
+        manifest:
+          type: object
+          additionalProperties: true
