@@ -72,3 +72,51 @@ Nothing here claims a total number of places for any area.
 - The ~120-row cap binds on raw rows, not in-target IDs. What split signal
   should replace "rows ≥ 96" in the planner?
 - Why do some pages carry far-away place IDs (the -77.48/39.04 tail)?
+
+## Plain summary (2026-10-20)
+
+### Things that are consistent (seen in all three places, many times)
+
+- One search never shows all the places in an area. Splitting the area
+  into smaller pieces always finds more.
+- Doing the exact same search again gives almost the same list. The order
+  changes, but almost no new places appear. Repeating a search is a waste.
+- The size of the list Google returns (about 90-120 names) is not the
+  number of places in your area. Many names on the list are outside it.
+- Splitting is the best way we found to get more places.
+- Some areas are simply empty for a word. They stay empty no matter what
+  we try.
+
+### Things that are likely (seen, but tested less)
+
+- Zooming in helps when the first view was too wide for the piece (it
+  helped a lot in London). When the view already fits the piece, it
+  helps little.
+- Moving the centre a bit helps sometimes, but splitting usually finds
+  the same places anyway.
+- Splitting a second time only helps in very busy places (London). In
+  normal places it mostly wastes searches.
+- The busier a place is, the more a single search misses.
+
+### Things that are unreliable (more testing needed)
+
+- The exact rule for when to stop splitting. We do not have a number yet.
+- Other search words. We only tested "restaurant".
+- Other kinds of areas: small towns, countryside, other countries. We
+  tested three busy city centres only.
+- Why some lists include places from very far away. Seen, not understood.
+- How many places exist in total in any area. We never know this. Every
+  number we report is "found so far", not "all of them".
+- Whether a third level of splitting helps even in London.
+
+## Budget rules
+
+- Cost so far: 168 searches, about 2 minutes each, across Vashi, London,
+  and Austin (Experiments 1-3). There is no API fee; the cost is time.
+- Every run gets a search cap before it starts, written in its plan.
+- One run answers one question. No "just in case" extra cells.
+- Old results are reused (re-analyse) instead of searched again.
+- If a whole round of splitting adds almost nothing (as in Vashi and
+  Austin at level 2), that branch stops. We do not split it again.
+- New ideas are tested on one small area first, then widened only if
+  they pay.

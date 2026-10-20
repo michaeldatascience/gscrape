@@ -1,6 +1,6 @@
 {
   "experiment": "exp1+exp2 three-locality comparison",
-  "design": "Identical setup in each locality: 'restaurant', 0.75 km circle, four ~750 m quadrant cells, Experiment 1 = 4 fresh repeats per cell, Experiment 2 = zoom_in (1 search), shift (+25% E/+25% N, 1 search), split (4 children) against the first-repeat baseline, all clipped to cell-and-circle. Centres: Vashi station 19.0635,72.9986 (zoom 17); Central London 51.514,-0.1325 (zoom 16, chosen by the span fitter at that latitude); Austin downtown 30.2672,-97.7431 (zoom 17). 160 fresh gosom searches in total across the three localities (~110-150 s each). Full runs remain in gitignored .runs/; per-locality distilled files sit beside this one.",
+  "design": "Identical setup in each locality: 'restaurant', 0.75 km circle, four ~750 m quadrant cells, Experiment 1 = 4 fresh repeats per cell, Experiment 2 = zoom_in (1 search), shift (+25% E/+25% N, 1 search), split (4 children) against the first-repeat baseline, all clipped to cell-and-circle. Centres: Vashi station 19.0635,72.9986 (zoom 17); Central London 51.514,-0.1325 (zoom 16, chosen by the span fitter at that latitude); Austin downtown 30.2672,-97.7431 (zoom 17). 120 fresh gosom searches in total across the three localities (~110-150 s each). Full runs remain in gitignored .runs/; per-locality distilled files sit beside this one.",
   "cities": {
     "vashi_india": {
       "area": "Vashi (circle of 0.75 km around latitude 19.0635, longitude 72.9986)",
