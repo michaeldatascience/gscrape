@@ -1,0 +1,218 @@
+{
+  "experiment": "exp1-repeatability",
+  "area": "Austin downtown (circle of 0.75 km around latitude 30.2672, longitude -97.7431)",
+  "keyword": "restaurant",
+  "summary": {
+    "mean_pairwise_jaccard": 0.9878,
+    "cells_with_overlap_evidence": 4,
+    "union_in_target_all_cells": 246,
+    "best_single_sum_all_cells": 246,
+    "extra_ids_from_repeats_all_cells": 0
+  },
+  "cells": [
+    {
+      "cell": "SW",
+      "view": {
+        "lat": 30.263817203541976,
+        "lon": -97.74699691163964,
+        "zoom": 17
+      },
+      "per_repeat": [
+        {
+          "repeat": 1,
+          "seconds": 138.8,
+          "raw_rows": 112,
+          "in_target": 77,
+          "far_outside_rows": 0,
+          "new_in_target": 77,
+          "cumulative_in_target": 77
+        },
+        {
+          "repeat": 2,
+          "seconds": 135.65,
+          "raw_rows": 113,
+          "in_target": 77,
+          "far_outside_rows": 0,
+          "new_in_target": 1,
+          "cumulative_in_target": 78
+        },
+        {
+          "repeat": 3,
+          "seconds": 135.97,
+          "raw_rows": 113,
+          "in_target": 78,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 78
+        },
+        {
+          "repeat": 4,
+          "seconds": 134.76,
+          "raw_rows": 113,
+          "in_target": 78,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 78
+        }
+      ],
+      "union_in_target": 78,
+      "core_in_target": 76,
+      "mean_pairwise_jaccard": 0.9872,
+      "min_pairwise_jaccard": 0.9744,
+      "mean_abs_rank_shift_core": 8.8
+    },
+    {
+      "cell": "SE",
+      "view": {
+        "lat": 30.263817203541976,
+        "lon": -97.73920308836034,
+        "zoom": 17
+      },
+      "per_repeat": [
+        {
+          "repeat": 1,
+          "seconds": 132.08,
+          "raw_rows": 105,
+          "in_target": 51,
+          "far_outside_rows": 0,
+          "new_in_target": 51,
+          "cumulative_in_target": 51
+        },
+        {
+          "repeat": 2,
+          "seconds": 127.43,
+          "raw_rows": 104,
+          "in_target": 51,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 51
+        },
+        {
+          "repeat": 3,
+          "seconds": 127.92,
+          "raw_rows": 104,
+          "in_target": 51,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 51
+        },
+        {
+          "repeat": 4,
+          "seconds": 129.79,
+          "raw_rows": 105,
+          "in_target": 51,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 51
+        }
+      ],
+      "union_in_target": 51,
+      "core_in_target": 51,
+      "mean_pairwise_jaccard": 1.0,
+      "min_pairwise_jaccard": 1.0,
+      "mean_abs_rank_shift_core": 8.87
+    },
+    {
+      "cell": "NW",
+      "view": {
+        "lat": 30.2705826787404,
+        "lon": -97.74699717884026,
+        "zoom": 17
+      },
+      "per_repeat": [
+        {
+          "repeat": 1,
+          "seconds": 126.09,
+          "raw_rows": 101,
+          "in_target": 46,
+          "far_outside_rows": 0,
+          "new_in_target": 46,
+          "cumulative_in_target": 46
+        },
+        {
+          "repeat": 2,
+          "seconds": 123.88,
+          "raw_rows": 98,
+          "in_target": 45,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 46
+        },
+        {
+          "repeat": 3,
+          "seconds": 125.24,
+          "raw_rows": 97,
+          "in_target": 44,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 46
+        },
+        {
+          "repeat": 4,
+          "seconds": 123.81,
+          "raw_rows": 98,
+          "in_target": 45,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 46
+        }
+      ],
+      "union_in_target": 46,
+      "core_in_target": 44,
+      "mean_pairwise_jaccard": 0.9781,
+      "min_pairwise_jaccard": 0.9565,
+      "mean_abs_rank_shift_core": 14.89
+    },
+    {
+      "cell": "NE",
+      "view": {
+        "lat": 30.2705826787404,
+        "lon": -97.73920282115974,
+        "zoom": 17
+      },
+      "per_repeat": [
+        {
+          "repeat": 1,
+          "seconds": 137.99,
+          "raw_rows": 108,
+          "in_target": 71,
+          "far_outside_rows": 0,
+          "new_in_target": 71,
+          "cumulative_in_target": 71
+        },
+        {
+          "repeat": 2,
+          "seconds": 126.18,
+          "raw_rows": 107,
+          "in_target": 70,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 71
+        },
+        {
+          "repeat": 3,
+          "seconds": 127.51,
+          "raw_rows": 108,
+          "in_target": 70,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 71
+        },
+        {
+          "repeat": 4,
+          "seconds": 129.14,
+          "raw_rows": 109,
+          "in_target": 71,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 71
+        }
+      ],
+      "union_in_target": 71,
+      "core_in_target": 69,
+      "mean_pairwise_jaccard": 0.9859,
+      "min_pairwise_jaccard": 0.9718,
+      "mean_abs_rank_shift_core": 8.16
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "experiment": "exp2-actions",
+  "area": "Central London (circle of 0.75 km around latitude 51.514, longitude -0.1325)",
+  "keyword": "restaurant",
+  "action_totals": {
+    "zoom_in": {
+      "searches": 4,
+      "seconds": 548.13,
+      "raw_rows": 445,
+      "new_vs_baseline": 272
+    },
+    "shift": {
+      "searches": 4,
+      "seconds": 577.87,
+      "raw_rows": 474,
+      "new_vs_baseline": 44
+    },
+    "split": {
+      "searches": 16,
+      "seconds": 2233.09,
+      "raw_rows": 1836,
+      "new_vs_baseline": 440
+    }
+  },
+  "cells": [
+    {
+      "cell": "SW",
+      "baseline_in_target": 34,
+      "actions": [
+        {
+          "action": "zoom_in",
+          "searches": 1,
+          "seconds": 133.26,
+          "raw_rows": 105,
+          "in_target": 92,
+          "new_vs_baseline": 65
+        },
+        {
+          "action": "shift",
+          "searches": 1,
+          "seconds": 146.35,
+          "raw_rows": 117,
+          "in_target": 32,
+          "new_vs_baseline": 1
+        },
+        {
+          "action": "split",
+          "searches": 4,
+          "seconds": 562.97,
+          "raw_rows": 455,
+          "in_target": 138,
+          "new_vs_baseline": 104
+        }
+      ],
+      "union_baseline_and_actions": 144,
+      "extra_over_baseline_all_actions": 110
+    },
+    {
+      "cell": "SE",
+      "baseline_in_target": 55,
+      "actions": [
+        {
+          "action": "zoom_in",
+          "searches": 1,
+          "seconds": 141.78,
+          "raw_rows": 119,
+          "in_target": 105,
+          "new_vs_baseline": 62
+        },
+        {
+          "action": "shift",
+          "searches": 1,
+          "seconds": 142.79,
+          "raw_rows": 118,
+          "in_target": 52,
+          "new_vs_baseline": 1
+        },
+        {
+          "action": "split",
+          "searches": 4,
+          "seconds": 570.37,
+          "raw_rows": 475,
+          "in_target": 176,
+          "new_vs_baseline": 124
+        }
+      ],
+      "union_baseline_and_actions": 186,
+      "extra_over_baseline_all_actions": 131
+    },
+    {
+      "cell": "NW",
+      "baseline_in_target": 32,
+      "actions": [
+        {
+          "action": "zoom_in",
+          "searches": 1,
+          "seconds": 131.5,
+          "raw_rows": 106,
+          "in_target": 87,
+          "new_vs_baseline": 69
+        },
+        {
+          "action": "shift",
+          "searches": 1,
+          "seconds": 144.8,
+          "raw_rows": 120,
+          "in_target": 54,
+          "new_vs_baseline": 24
+        },
+        {
+          "action": "split",
+          "searches": 4,
+          "seconds": 546.53,
+          "raw_rows": 445,
+          "in_target": 156,
+          "new_vs_baseline": 124
+        }
+      ],
+      "union_baseline_and_actions": 159,
+      "extra_over_baseline_all_actions": 127
+    },
+    {
+      "cell": "NE",
+      "baseline_in_target": 32,
+      "actions": [
+        {
+          "action": "zoom_in",
+          "searches": 1,
+          "seconds": 141.59,
+          "raw_rows": 115,
+          "in_target": 101,
+          "new_vs_baseline": 76
+        },
+        {
+          "action": "shift",
+          "searches": 1,
+          "seconds": 143.93,
+          "raw_rows": 119,
+          "in_target": 50,
+          "new_vs_baseline": 18
+        },
+        {
+          "action": "split",
+          "searches": 4,
+          "seconds": 553.22,
+          "raw_rows": 461,
+          "in_target": 119,
+          "new_vs_baseline": 88
+        }
+      ],
+      "union_baseline_and_actions": 133,
+      "extra_over_baseline_all_actions": 101
+    }
+  ]
+}

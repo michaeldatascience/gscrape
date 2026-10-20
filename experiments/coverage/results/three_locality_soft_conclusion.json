@@ -1,0 +1,319 @@
+{
+  "experiment": "exp1+exp2 three-locality comparison",
+  "design": "Identical setup in each locality: 'restaurant', 0.75 km circle, four ~750 m quadrant cells, Experiment 1 = 4 fresh repeats per cell, Experiment 2 = zoom_in (1 search), shift (+25% E/+25% N, 1 search), split (4 children) against the first-repeat baseline, all clipped to cell-and-circle. Centres: Vashi station 19.0635,72.9986 (zoom 17); Central London 51.514,-0.1325 (zoom 16, chosen by the span fitter at that latitude); Austin downtown 30.2672,-97.7431 (zoom 17). 160 fresh gosom searches in total across the three localities (~110-150 s each). Full runs remain in gitignored .runs/; per-locality distilled files sit beside this one.",
+  "cities": {
+    "vashi_india": {
+      "area": "Vashi (circle of 0.75 km around latitude 19.0635, longitude 72.9986)",
+      "keyword": "restaurant",
+      "exp1": {
+        "mean_pairwise_jaccard": 0.9881,
+        "union_in_target": 87,
+        "extra_ids_from_repeats": 0,
+        "cells_core_union": [
+          [
+            0,
+            0
+          ],
+          [
+            13,
+            14
+          ],
+          [
+            38,
+            38
+          ],
+          [
+            35,
+            35
+          ]
+        ],
+        "mean_abs_rank_shift_core": [
+          0.0,
+          6.71,
+          12.54,
+          10.37
+        ],
+        "raw_rows_range": [
+          87,
+          111
+        ]
+      },
+      "exp2": {
+        "baseline_in_target_sum": 87,
+        "union_baseline_and_actions_sum": 108,
+        "gain_over_baseline": 21,
+        "action_totals": {
+          "zoom_in": {
+            "new_vs_baseline": 7,
+            "searches": 4,
+            "seconds": 460.74
+          },
+          "shift": {
+            "new_vs_baseline": 5,
+            "searches": 4,
+            "seconds": 483.05
+          },
+          "split": {
+            "new_vs_baseline": 18,
+            "searches": 16,
+            "seconds": 1876.4
+          }
+        },
+        "cells": [
+          {
+            "cell": "SW",
+            "baseline": 0,
+            "actions_new": {
+              "zoom_in": 0,
+              "shift": 0,
+              "split": 0
+            },
+            "union": 0
+          },
+          {
+            "cell": "SE",
+            "baseline": 14,
+            "actions_new": {
+              "zoom_in": 5,
+              "shift": 0,
+              "split": 3
+            },
+            "union": 20
+          },
+          {
+            "cell": "NW",
+            "baseline": 38,
+            "actions_new": {
+              "zoom_in": 0,
+              "shift": 0,
+              "split": 5
+            },
+            "union": 43
+          },
+          {
+            "cell": "NE",
+            "baseline": 35,
+            "actions_new": {
+              "zoom_in": 2,
+              "shift": 5,
+              "split": 10
+            },
+            "union": 45
+          }
+        ]
+      }
+    },
+    "central_london_uk": {
+      "area": "Central London (circle of 0.75 km around latitude 51.514, longitude -0.1325)",
+      "keyword": "restaurant",
+      "exp1": {
+        "mean_pairwise_jaccard": 0.9744,
+        "union_in_target": 154,
+        "extra_ids_from_repeats": 0,
+        "cells_core_union": [
+          [
+            33,
+            34
+          ],
+          [
+            51,
+            55
+          ],
+          [
+            30,
+            32
+          ],
+          [
+            32,
+            33
+          ]
+        ],
+        "mean_abs_rank_shift_core": [
+          38.88,
+          11.97,
+          2.38,
+          17.29
+        ],
+        "raw_rows_range": [
+          117,
+          120
+        ]
+      },
+      "exp2": {
+        "baseline_in_target_sum": 153,
+        "union_baseline_and_actions_sum": 622,
+        "gain_over_baseline": 469,
+        "action_totals": {
+          "zoom_in": {
+            "new_vs_baseline": 272,
+            "searches": 4,
+            "seconds": 548.13
+          },
+          "shift": {
+            "new_vs_baseline": 44,
+            "searches": 4,
+            "seconds": 577.87
+          },
+          "split": {
+            "new_vs_baseline": 440,
+            "searches": 16,
+            "seconds": 2233.09
+          }
+        },
+        "cells": [
+          {
+            "cell": "SW",
+            "baseline": 34,
+            "actions_new": {
+              "zoom_in": 65,
+              "shift": 1,
+              "split": 104
+            },
+            "union": 144
+          },
+          {
+            "cell": "SE",
+            "baseline": 55,
+            "actions_new": {
+              "zoom_in": 62,
+              "shift": 1,
+              "split": 124
+            },
+            "union": 186
+          },
+          {
+            "cell": "NW",
+            "baseline": 32,
+            "actions_new": {
+              "zoom_in": 69,
+              "shift": 24,
+              "split": 124
+            },
+            "union": 159
+          },
+          {
+            "cell": "NE",
+            "baseline": 32,
+            "actions_new": {
+              "zoom_in": 76,
+              "shift": 18,
+              "split": 88
+            },
+            "union": 133
+          }
+        ]
+      }
+    },
+    "austin_us": {
+      "area": "Austin downtown (circle of 0.75 km around latitude 30.2672, longitude -97.7431)",
+      "keyword": "restaurant",
+      "exp1": {
+        "mean_pairwise_jaccard": 0.9878,
+        "union_in_target": 246,
+        "extra_ids_from_repeats": 0,
+        "cells_core_union": [
+          [
+            76,
+            78
+          ],
+          [
+            51,
+            51
+          ],
+          [
+            44,
+            46
+          ],
+          [
+            69,
+            71
+          ]
+        ],
+        "mean_abs_rank_shift_core": [
+          8.8,
+          8.87,
+          14.89,
+          8.16
+        ],
+        "raw_rows_range": [
+          97,
+          113
+        ]
+      },
+      "exp2": {
+        "baseline_in_target_sum": 245,
+        "union_baseline_and_actions_sum": 288,
+        "gain_over_baseline": 43,
+        "action_totals": {
+          "zoom_in": {
+            "new_vs_baseline": 3,
+            "searches": 4,
+            "seconds": 521.92
+          },
+          "shift": {
+            "new_vs_baseline": 6,
+            "searches": 4,
+            "seconds": 541.32
+          },
+          "split": {
+            "new_vs_baseline": 41,
+            "searches": 16,
+            "seconds": 2178.44
+          }
+        },
+        "cells": [
+          {
+            "cell": "SW",
+            "baseline": 77,
+            "actions_new": {
+              "zoom_in": 1,
+              "shift": 1,
+              "split": 5
+            },
+            "union": 82
+          },
+          {
+            "cell": "SE",
+            "baseline": 51,
+            "actions_new": {
+              "zoom_in": 1,
+              "shift": 1,
+              "split": 28
+            },
+            "union": 79
+          },
+          {
+            "cell": "NW",
+            "baseline": 46,
+            "actions_new": {
+              "zoom_in": 1,
+              "shift": 2,
+              "split": 2
+            },
+            "union": 49
+          },
+          {
+            "cell": "NE",
+            "baseline": 71,
+            "actions_new": {
+              "zoom_in": 0,
+              "shift": 2,
+              "split": 6
+            },
+            "union": 78
+          }
+        ]
+      }
+    }
+  },
+  "soft_conclusions": [
+    "Repeating an identical view is not a discovery action anywhere: across 12 cells in 3 localities, repeats added 0 in-target IDs beyond the best single search, while ID sets were stable (mean pairwise Jaccard 0.974-0.988). Rank order is unstable everywhere (core IDs shift 2.4-38.9 positions).",
+    "Split is the strongest discovery action in total in all three localities (London +440, Austin +41, Vashi +18 new IDs) and the only action with exclusive finds in most cells. Its cost is 4 pages per cell.",
+    "Zoom-in value depends on how badly the integer zoom fit overshoots the cell: in London the fitted baseline zoom 16 views ~1.19 km for a 750 m cell, and one zoom-in page alone found 62-76 new IDs per cell; in Vashi and Austin (zoom 17, ~0.83-0.90 km view) zoom-in found 0-5 per cell. Check viewport-span vs cell-span before choosing.",
+    "Shift is the weakest action overall (London 44, Austin 6, Vashi 5 new) and almost everything it finds, split also finds.",
+    "The size of what one search misses scales with density: London observed IDs went 153 -> 622 (+307%), Austin 245 -> 288 (+18%), Vashi 87 -> 108 (+24%). A single view is worst exactly where places are densest.",
+    "Raw rows never measure local density: London pages returned 117-120 raw rows with only 32-55 in-target; Vashi SW returned ~90 raw rows with 0 in-target under every action in both experiments.",
+    "A cell can be truly empty for a keyword (Vashi SW: 0 in-target across 10 searches and 3 action types) - stop spending on it without a reference check."
+  ],
+  "claim": "Soft conclusions from three localities and one keyword. Observed unions are larger observed sets, not every place in any area. Totals remain unknown everywhere."
+}

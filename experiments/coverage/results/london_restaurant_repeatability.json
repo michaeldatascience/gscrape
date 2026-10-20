@@ -1,0 +1,218 @@
+{
+  "experiment": "exp1-repeatability",
+  "area": "Central London (circle of 0.75 km around latitude 51.514, longitude -0.1325)",
+  "keyword": "restaurant",
+  "summary": {
+    "mean_pairwise_jaccard": 0.9744,
+    "cells_with_overlap_evidence": 4,
+    "union_in_target_all_cells": 154,
+    "best_single_sum_all_cells": 154,
+    "extra_ids_from_repeats_all_cells": 0
+  },
+  "cells": [
+    {
+      "cell": "SW",
+      "view": {
+        "lat": 51.510629333574286,
+        "lon": -0.13790156204568163,
+        "zoom": 16
+      },
+      "per_repeat": [
+        {
+          "repeat": 1,
+          "seconds": 151.45,
+          "raw_rows": 120,
+          "in_target": 34,
+          "far_outside_rows": 0,
+          "new_in_target": 34,
+          "cumulative_in_target": 34
+        },
+        {
+          "repeat": 2,
+          "seconds": 143.69,
+          "raw_rows": 119,
+          "in_target": 34,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 34
+        },
+        {
+          "repeat": 3,
+          "seconds": 144.88,
+          "raw_rows": 118,
+          "in_target": 33,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 34
+        },
+        {
+          "repeat": 4,
+          "seconds": 149.57,
+          "raw_rows": 119,
+          "in_target": 34,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 34
+        }
+      ],
+      "union_in_target": 34,
+      "core_in_target": 33,
+      "mean_pairwise_jaccard": 0.9853,
+      "min_pairwise_jaccard": 0.9706,
+      "mean_abs_rank_shift_core": 38.88
+    },
+    {
+      "cell": "SE",
+      "view": {
+        "lat": 51.510629333574286,
+        "lon": -0.12709843795431838,
+        "zoom": 16
+      },
+      "per_repeat": [
+        {
+          "repeat": 1,
+          "seconds": 148.04,
+          "raw_rows": 119,
+          "in_target": 55,
+          "far_outside_rows": 0,
+          "new_in_target": 55,
+          "cumulative_in_target": 55
+        },
+        {
+          "repeat": 2,
+          "seconds": 142.27,
+          "raw_rows": 117,
+          "in_target": 53,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 55
+        },
+        {
+          "repeat": 3,
+          "seconds": 141.0,
+          "raw_rows": 117,
+          "in_target": 53,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 55
+        },
+        {
+          "repeat": 4,
+          "seconds": 145.83,
+          "raw_rows": 119,
+          "in_target": 55,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 55
+        }
+      ],
+      "union_in_target": 55,
+      "core_in_target": 51,
+      "mean_pairwise_jaccard": 0.9636,
+      "min_pairwise_jaccard": 0.9273,
+      "mean_abs_rank_shift_core": 11.97
+    },
+    {
+      "cell": "NW",
+      "view": {
+        "lat": 51.517370415731335,
+        "lon": -0.13790235937726059,
+        "zoom": 16
+      },
+      "per_repeat": [
+        {
+          "repeat": 1,
+          "seconds": 149.76,
+          "raw_rows": 119,
+          "in_target": 32,
+          "far_outside_rows": 0,
+          "new_in_target": 32,
+          "cumulative_in_target": 32
+        },
+        {
+          "repeat": 2,
+          "seconds": 147.11,
+          "raw_rows": 117,
+          "in_target": 31,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 32
+        },
+        {
+          "repeat": 3,
+          "seconds": 147.91,
+          "raw_rows": 117,
+          "in_target": 32,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 32
+        },
+        {
+          "repeat": 4,
+          "seconds": 146.31,
+          "raw_rows": 117,
+          "in_target": 31,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 32
+        }
+      ],
+      "union_in_target": 32,
+      "core_in_target": 30,
+      "mean_pairwise_jaccard": 0.9688,
+      "min_pairwise_jaccard": 0.9375,
+      "mean_abs_rank_shift_core": 2.38
+    },
+    {
+      "cell": "NE",
+      "view": {
+        "lat": 51.517370415731335,
+        "lon": -0.12709764062273943,
+        "zoom": 16
+      },
+      "per_repeat": [
+        {
+          "repeat": 1,
+          "seconds": 139.8,
+          "raw_rows": 119,
+          "in_target": 32,
+          "far_outside_rows": 0,
+          "new_in_target": 32,
+          "cumulative_in_target": 32
+        },
+        {
+          "repeat": 2,
+          "seconds": 141.35,
+          "raw_rows": 118,
+          "in_target": 33,
+          "far_outside_rows": 0,
+          "new_in_target": 1,
+          "cumulative_in_target": 33
+        },
+        {
+          "repeat": 3,
+          "seconds": 139.28,
+          "raw_rows": 119,
+          "in_target": 32,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 33
+        },
+        {
+          "repeat": 4,
+          "seconds": 142.54,
+          "raw_rows": 119,
+          "in_target": 33,
+          "far_outside_rows": 0,
+          "new_in_target": 0,
+          "cumulative_in_target": 33
+        }
+      ],
+      "union_in_target": 33,
+      "core_in_target": 32,
+      "mean_pairwise_jaccard": 0.9798,
+      "min_pairwise_jaccard": 0.9697,
+      "mean_abs_rank_shift_core": 17.29
+    }
+  ]
+}
