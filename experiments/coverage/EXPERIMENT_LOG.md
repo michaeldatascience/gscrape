@@ -46,10 +46,26 @@ Nothing here claims a total number of places for any area.
 3. Judge cells by in-target IDs, never raw rows.
 4. Park a cell that stays at 0 in-target; do not keep spending on it.
 
+## Experiment 3 — second-level split (16 grandchildren, ~187.5 m, best cell per locality)
+
+- London SE: baseline 186 → **380** (+194 new, 12.1/search). Every
+  grandchild page returned 45–113 in-target places. Recursion is nowhere
+  near dry at 187.5 m in dense central London.
+- Vashi NE: 45 → 46 (+1 in 16 searches, 0.06/search). Dry.
+- Austin SE: 79 → 82 (+3 in 16, 0.19/search). Dry, even though its level-1
+  split had found +28.
+- Lesson: level-2 yield spans ~200× on identical geometry and keyword.
+  Whether to deepen must be decided per cell from what its children
+  returned, never as a global depth. A level-1 win does not by itself
+  predict a level-2 win.
+
 ## Open questions
 
-- Does a second level of splitting (187.5 m cells) keep finding places, or
-  does the gain dry up? → Experiment 3.
+- In London, does level 3 (splitting the productive grandchildren, ~94 m)
+  still pay, and which grandchildren carry it?
+- Can a cheap child-level signal (in-target count of the level-1 children,
+  which we did not store separately) predict level-2 yield well enough to
+  skip dry branches without searching them?
 - Does the action ranking hold for a sparser keyword (e.g. `dentist`)?
 - What baseline signal best predicts split gain: raw rows, in-target count,
   in-target share, or viewport/cell span ratio?

@@ -71,6 +71,7 @@
 - **Status:** Accepted.
 - **Decision:** Take each locality's most productive Experiment 2 cell (Vashi NE, London SE, Austin SE), use everything Experiments 1–2 observed in it as baseline, split its four children again, and search the 16 grandchildren (~187.5 m) once each via `geocoverage.deepen`. New in-target IDs per search at level 2 are compared with level 1's split yield. Exploratory observations are kept in `experiments/coverage/EXPERIMENT_LOG.md` alongside the per-experiment JSON results.
 - **Reason:** The planner's core loop is recursive splitting; Experiments 1–2 only measured one level. Whether the second level still pays decides if recursion depth is a real mechanism or a one-level trick, and where a stop rule can sit.
+- **Result (2026-10-20, 48 fresh searches, `results/three_locality_deepen.json`):** London SE doubled again (186→380, +194 at 12.1/search); Vashi NE gained +1 and Austin SE +3 across 16 grandchildren each. Second-level splitting is a real mechanism only where cells stay dense; depth must be decided per cell from child returns, not set globally, and a level-1 win alone does not justify level 2.
 
 ## Open items requiring measured decisions
 

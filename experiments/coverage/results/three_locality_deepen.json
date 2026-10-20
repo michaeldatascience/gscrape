@@ -1,0 +1,336 @@
+{
+  "experiment": "exp3-deepen",
+  "design": "One best Experiment 2 cell per locality (Vashi NE, London SE, Austin SE). Baseline = union of Experiments 1-2 in that cell. 16 grandchildren (~187.5 m) searched once each; returns clipped to the original cell-and-circle. Full runs in gitignored .runs/*-deepen.json.",
+  "cities": {
+    "vashi": {
+      "area": "Vashi",
+      "cell": "NE",
+      "baseline_in_target": 45,
+      "grandchildren_searched": 16,
+      "errors": [],
+      "new_in_target_level2": 1,
+      "new_per_search": 0.062,
+      "union_after_level2": 46,
+      "grandchildren": [
+        {
+          "grandchild": "SW/SW",
+          "raw_rows": 97,
+          "in_target": 26,
+          "new": 0
+        },
+        {
+          "grandchild": "SW/SE",
+          "raw_rows": 92,
+          "in_target": 18,
+          "new": 0
+        },
+        {
+          "grandchild": "SW/NW",
+          "raw_rows": 78,
+          "in_target": 21,
+          "new": 0
+        },
+        {
+          "grandchild": "SW/NE",
+          "raw_rows": 80,
+          "in_target": 23,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/SW",
+          "raw_rows": 96,
+          "in_target": 18,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/SE",
+          "raw_rows": 94,
+          "in_target": 16,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/NW",
+          "raw_rows": 79,
+          "in_target": 18,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/NE",
+          "raw_rows": 79,
+          "in_target": 15,
+          "new": 0
+        },
+        {
+          "grandchild": "NW/SW",
+          "raw_rows": 77,
+          "in_target": 15,
+          "new": 0
+        },
+        {
+          "grandchild": "NW/SE",
+          "raw_rows": 79,
+          "in_target": 15,
+          "new": 0
+        },
+        {
+          "grandchild": "NW/NW",
+          "raw_rows": 96,
+          "in_target": 21,
+          "new": 0
+        },
+        {
+          "grandchild": "NW/NE",
+          "raw_rows": 85,
+          "in_target": 18,
+          "new": 0
+        },
+        {
+          "grandchild": "NE/SW",
+          "raw_rows": 40,
+          "in_target": 14,
+          "new": 0
+        },
+        {
+          "grandchild": "NE/SE",
+          "raw_rows": 82,
+          "in_target": 15,
+          "new": 0
+        },
+        {
+          "grandchild": "NE/NW",
+          "raw_rows": 89,
+          "in_target": 20,
+          "new": 1
+        },
+        {
+          "grandchild": "NE/NE",
+          "raw_rows": 89,
+          "in_target": 18,
+          "new": 0
+        }
+      ]
+    },
+    "london": {
+      "area": "Central London",
+      "cell": "SE",
+      "baseline_in_target": 186,
+      "grandchildren_searched": 16,
+      "errors": [],
+      "new_in_target_level2": 194,
+      "new_per_search": 12.125,
+      "union_after_level2": 380,
+      "grandchildren": [
+        {
+          "grandchild": "SW/SW",
+          "raw_rows": 94,
+          "in_target": 52,
+          "new": 6
+        },
+        {
+          "grandchild": "SW/SE",
+          "raw_rows": 108,
+          "in_target": 58,
+          "new": 1
+        },
+        {
+          "grandchild": "SW/NW",
+          "raw_rows": 91,
+          "in_target": 76,
+          "new": 28
+        },
+        {
+          "grandchild": "SW/NE",
+          "raw_rows": 100,
+          "in_target": 93,
+          "new": 11
+        },
+        {
+          "grandchild": "SE/SW",
+          "raw_rows": 113,
+          "in_target": 45,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/SE",
+          "raw_rows": 115,
+          "in_target": 45,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/NW",
+          "raw_rows": 108,
+          "in_target": 83,
+          "new": 8
+        },
+        {
+          "grandchild": "SE/NE",
+          "raw_rows": 117,
+          "in_target": 57,
+          "new": 1
+        },
+        {
+          "grandchild": "NW/SW",
+          "raw_rows": 109,
+          "in_target": 92,
+          "new": 32
+        },
+        {
+          "grandchild": "NW/SE",
+          "raw_rows": 113,
+          "in_target": 113,
+          "new": 17
+        },
+        {
+          "grandchild": "NW/NW",
+          "raw_rows": 105,
+          "in_target": 87,
+          "new": 30
+        },
+        {
+          "grandchild": "NW/NE",
+          "raw_rows": 96,
+          "in_target": 84,
+          "new": 20
+        },
+        {
+          "grandchild": "NE/SW",
+          "raw_rows": 101,
+          "in_target": 100,
+          "new": 14
+        },
+        {
+          "grandchild": "NE/SE",
+          "raw_rows": 110,
+          "in_target": 63,
+          "new": 9
+        },
+        {
+          "grandchild": "NE/NW",
+          "raw_rows": 100,
+          "in_target": 73,
+          "new": 9
+        },
+        {
+          "grandchild": "NE/NE",
+          "raw_rows": 120,
+          "in_target": 58,
+          "new": 8
+        }
+      ]
+    },
+    "austin": {
+      "area": "Austin downtown",
+      "cell": "SE",
+      "baseline_in_target": 79,
+      "grandchildren_searched": 16,
+      "errors": [],
+      "new_in_target_level2": 3,
+      "new_per_search": 0.188,
+      "union_after_level2": 82,
+      "grandchildren": [
+        {
+          "grandchild": "SW/SW",
+          "raw_rows": 110,
+          "in_target": 31,
+          "new": 1
+        },
+        {
+          "grandchild": "SW/SE",
+          "raw_rows": 106,
+          "in_target": 32,
+          "new": 0
+        },
+        {
+          "grandchild": "SW/NW",
+          "raw_rows": 114,
+          "in_target": 31,
+          "new": 0
+        },
+        {
+          "grandchild": "SW/NE",
+          "raw_rows": 114,
+          "in_target": 39,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/SW",
+          "raw_rows": 107,
+          "in_target": 31,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/SE",
+          "raw_rows": 105,
+          "in_target": 30,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/NW",
+          "raw_rows": 112,
+          "in_target": 38,
+          "new": 0
+        },
+        {
+          "grandchild": "SE/NE",
+          "raw_rows": 104,
+          "in_target": 33,
+          "new": 0
+        },
+        {
+          "grandchild": "NW/SW",
+          "raw_rows": 111,
+          "in_target": 35,
+          "new": 0
+        },
+        {
+          "grandchild": "NW/SE",
+          "raw_rows": 60,
+          "in_target": 32,
+          "new": 0
+        },
+        {
+          "grandchild": "NW/NW",
+          "raw_rows": 110,
+          "in_target": 35,
+          "new": 0
+        },
+        {
+          "grandchild": "NW/NE",
+          "raw_rows": 117,
+          "in_target": 48,
+          "new": 0
+        },
+        {
+          "grandchild": "NE/SW",
+          "raw_rows": 116,
+          "in_target": 43,
+          "new": 0
+        },
+        {
+          "grandchild": "NE/SE",
+          "raw_rows": 118,
+          "in_target": 38,
+          "new": 0
+        },
+        {
+          "grandchild": "NE/NW",
+          "raw_rows": 119,
+          "in_target": 43,
+          "new": 2
+        },
+        {
+          "grandchild": "NE/NE",
+          "raw_rows": 111,
+          "in_target": 35,
+          "new": 0
+        }
+      ]
+    }
+  },
+  "observations": [
+    "London SE doubled again at level 2: 186 -> 380 in-target IDs (+194, 12.1/search). Every grandchild page still returned 45-113 in-target places. Recursion has not dried up at 187.5 m in dense central London.",
+    "Vashi NE dried up: +1 new ID in 16 grandchildren (0.06/search). Austin SE dried up: +3 in 16 (0.19/search), despite its level-1 split having found +28. Level-1 success does not predict level-2 success; child saturation does.",
+    "Level-2 yield per search by locality: London 12.125, Austin 0.188, Vashi 0.062 - a ~200x spread on identical geometry and keyword. Depth must be decided per cell from observed density, never as a global setting."
+  ],
+  "claim": "Deepening evidence only. Unions are larger observed sets, not every place in any cell. Totals unknown."
+}
